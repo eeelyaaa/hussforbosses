@@ -102,4 +102,4 @@ Higgsfield credits used in the build: 0. Balance at approval: 34.96.
 |---|---|---|---|
 | M0 | done | exit checks in `team/verification/m0-setup.md` | 96bbb68 |
 | M1 | done | `verification/m1-exit-checks.md`: 30 PASS, 0 FAIL, 11 UNVERIFIED (looks/listens); Core loop gate PASS (`m1-26-fight-camera.md` M1-26b CheckAll) | a70ff0f |
-| M2 | done | `verification/m2-gate.md` 27/27 scripted PASS; `verification/m2-30-onscreen.md` (O2-O4 PASS; O1, O5-O8, crate UNVERIFIED -> playtest) | (this commit) |
+| M2 | done | `verification/m2-gate.md` 27/27 scripted PASS; `verification/m2-30-onscreen.md` (O2-O4 PASS; O1, O5-O8, crate UNVERIFIED -> playtest) | 02d1d52 |
