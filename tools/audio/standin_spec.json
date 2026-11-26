@@ -1,0 +1,8 @@
+{"format":"wav","sounds":[
+{"name":"thud_soft","sound":"thump/soft","n":3,"seed":11},
+{"name":"thud_book","sound":"thump/book","n":3,"seed":12},
+{"name":"thud_drop","sound":"hit/drop","n":3,"seed":13},
+{"name":"swish","sound":"flick/thin","n":1,"seed":14},
+{"name":"swish2","sound":"swish/flick","n":1,"seed":15},
+{"name":"sting","sound":"tick/glass","n":1,"seed":16}
+]}

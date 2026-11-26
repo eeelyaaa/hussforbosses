@@ -137,6 +137,40 @@ function DevSync.sync()
 		setSource(ensure(parent, f.name, f.class, false), f.source)
 	end
 
+	-- Edit-mode require caches per ModuleScript instance, and setting Source does not clear it, so a changed
+	-- module would still return its old value (and so would every module that required it). When anything
+	-- changed, swap every synced ModuleScript for a new instance of the same name, attributes, tags and
+	-- children: one swap per module, never a clone of a tree, so no duplicates. Order does not matter: a swap reads
+	-- the old module's current parent and children. The loader refuses in play mode, so this is edit mode only.
+	local swapped = 0
+	if changed > 0 then
+		local mods = {}
+		for inst in pairs(seen) do
+			if inst:IsA("ModuleScript") then
+				table.insert(mods, inst)
+			end
+		end
+		for _, old in ipairs(mods) do
+			local new = Instance.new("ModuleScript")
+			new.Name = old.Name
+			new.Source = old.Source
+			for k, v in pairs(old:GetAttributes()) do
+				new:SetAttribute(k, v)
+			end
+			for _, tag in ipairs(old:GetTags()) do
+				new:AddTag(tag)
+			end
+			for _, child in ipairs(old:GetChildren()) do
+				child.Parent = new
+			end
+			new.Parent = old.Parent
+			seen[old] = nil
+			seen[new] = true
+			old:Destroy()
+			swapped += 1
+		end
+	end
+
 	local removed = 0
 	for _, root in pairs(ROOTS) do
 		for _, d in ipairs(root:GetDescendants()) do
@@ -146,8 +180,8 @@ function DevSync.sync()
 			end
 		end
 	end
-	print(("DevSync: %d files, %d updated, %d removed"):format(total, changed, removed))
-	return { total = total, changed = changed, removed = removed }
+	print(("DevSync: %d files, %d updated, %d removed, %d modules swapped"):format(total, changed, removed, swapped))
+	return { total = total, changed = changed, removed = removed, swapped = swapped }
 end
 
 function DevSync.run(name)

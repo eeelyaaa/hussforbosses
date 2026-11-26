@@ -1,0 +1,765 @@
+{
+ "_doc": "Chomp Frog (z1_t1), body type 2 squat stomper. Cube indices (integers); a cube i occupies [i*cube, (i+1)*cube] studs. x = left/right (centred: -8..7), y = depth (front = -y, centred: -5..4), z = up (feet z=0). Fills are painted in order, later fills win. box = [x0,y0,z0,x1,y1,z1] half-open. ball = [cx,cy,cz,r] over cube-centre distance. cyl = [axis,c1,c2,r,lo,hi]: cubes lo..hi-1 along axis within r of the line at (c1,c2) on the other two axes. seg = [x0,y0,z0,x1,y1,z1,r]: cubes within r of a segment (flat ends). colour = list of palette names; the cube picks one by a fixed hash, so repeats weight the scatter. mirror=true paints the same fill again at x -> -x-1 (colour hash taken from the mirrored cube). Colours are sampled from team/pack/concepts/brick-brawl/creatures.png. M1-03b (2026-11-25): rebuilt to the picture: domed head with a V brow, nostrils, forward jaw wedge, splayed legs and toed feet, round fists with a wrist cuff.",
+ "id": "z1_t1",
+ "cube": 0.2,
+ "height_cubes": 20,
+ "palette": {
+  "g1": "#3ABE23",
+  "g2": "#2FA82A",
+  "g3": "#52CC2B",
+  "cream": "#ECCF97",
+  "cream2": "#D7BE8D",
+  "pink": "#F197BA",
+  "mouth": "#6E1E2E",
+  "yellow": "#F1D417",
+  "white": "#F2F5F8",
+  "ink": "#14151C"
+ },
+ "groups": {
+  "Body": {
+   "pivot": [
+    0,
+    0,
+    0
+   ]
+  },
+  "Head": {
+   "pivot": [
+    0,
+    3,
+    11
+   ]
+  },
+  "Sig": {
+   "pivot": [
+    0,
+    3,
+    11
+   ]
+  },
+  "FistL": {
+   "pivot": [
+    7,
+    -5,
+    9
+   ]
+  },
+  "FistR": {
+   "pivot": [
+    -7,
+    -5,
+    9
+   ]
+  }
+ },
+ "fills": [
+  {
+   "g": "Body",
+   "box": [
+    3,
+    -5,
+    0,
+    11,
+    2,
+    1
+   ],
+   "c": [
+    "g1",
+    "g1",
+    "g2",
+    "g3"
+   ],
+   "mirror": true
+  },
+  {
+   "g": "Body",
+   "box": [
+    3,
+    -7,
+    0,
+    5,
+    -5,
+    1
+   ],
+   "c": [
+    "g1",
+    "g2",
+    "g3"
+   ],
+   "mirror": true
+  },
+  {
+   "g": "Body",
+   "box": [
+    3,
+    -6,
+    1,
+    5,
+    -5,
+    2
+   ],
+   "c": [
+    "g1",
+    "g3"
+   ],
+   "mirror": true
+  },
+  {
+   "g": "Body",
+   "box": [
+    6,
+    -7,
+    0,
+    8,
+    -5,
+    1
+   ],
+   "c": [
+    "g1",
+    "g2",
+    "g3"
+   ],
+   "mirror": true
+  },
+  {
+   "g": "Body",
+   "box": [
+    6,
+    -6,
+    1,
+    8,
+    -5,
+    2
+   ],
+   "c": [
+    "g1",
+    "g3"
+   ],
+   "mirror": true
+  },
+  {
+   "g": "Body",
+   "box": [
+    9,
+    -7,
+    0,
+    11,
+    -5,
+    1
+   ],
+   "c": [
+    "g1",
+    "g2",
+    "g3"
+   ],
+   "mirror": true
+  },
+  {
+   "g": "Body",
+   "box": [
+    9,
+    -6,
+    1,
+    11,
+    -5,
+    2
+   ],
+   "c": [
+    "g1",
+    "g3"
+   ],
+   "mirror": true
+  },
+  {
+   "g": "Body",
+   "box": [
+    3,
+    -5,
+    1,
+    10,
+    2,
+    2
+   ],
+   "c": [
+    "g1",
+    "g2",
+    "g3"
+   ],
+   "mirror": true
+  },
+  {
+   "g": "Body",
+   "box": [
+    3,
+    -4,
+    2,
+    9,
+    2,
+    3
+   ],
+   "c": [
+    "g1",
+    "g2",
+    "g2",
+    "g3"
+   ],
+   "mirror": true
+  },
+  {
+   "g": "Body",
+   "box": [
+    2,
+    -3,
+    3,
+    8,
+    2,
+    4
+   ],
+   "c": [
+    "g1",
+    "g2",
+    "g3"
+   ],
+   "mirror": true
+  },
+  {
+   "g": "Body",
+   "box": [
+    2,
+    -3,
+    4,
+    7,
+    2,
+    5
+   ],
+   "c": [
+    "g1",
+    "g2",
+    "g3"
+   ],
+   "mirror": true
+  },
+  {
+   "g": "Body",
+   "box": [
+    -6,
+    -4,
+    3,
+    6,
+    4,
+    8
+   ],
+   "c": [
+    "g1",
+    "g2",
+    "g1",
+    "g3"
+   ]
+  },
+  {
+   "g": "Body",
+   "box": [
+    -7,
+    -4,
+    5,
+    7,
+    4,
+    8
+   ],
+   "c": [
+    "g1",
+    "g2",
+    "g1",
+    "g3"
+   ]
+  },
+  {
+   "g": "Body",
+   "box": [
+    -7,
+    3,
+    8,
+    7,
+    5,
+    11
+   ],
+   "c": [
+    "g1",
+    "g2",
+    "g1",
+    "g3"
+   ]
+  },
+  {
+   "g": "Body",
+   "box": [
+    -6,
+    -5,
+    4,
+    6,
+    -4,
+    8
+   ],
+   "c": [
+    "cream",
+    "cream",
+    "cream2"
+   ]
+  },
+  {
+   "g": "Body",
+   "box": [
+    -4,
+    -5,
+    3,
+    4,
+    -4,
+    4
+   ],
+   "c": [
+    "cream",
+    "cream",
+    "cream2"
+   ]
+  },
+  {
+   "g": "Sig",
+   "box": [
+    -6,
+    -6,
+    8,
+    6,
+    3,
+    9
+   ],
+   "c": [
+    "cream",
+    "cream",
+    "cream2"
+   ]
+  },
+  {
+   "g": "Sig",
+   "box": [
+    -7,
+    -7,
+    9,
+    7,
+    3,
+    10
+   ],
+   "c": [
+    "cream",
+    "cream",
+    "cream2"
+   ]
+  },
+  {
+   "g": "Sig",
+   "box": [
+    -7,
+    -8,
+    10,
+    7,
+    3,
+    11
+   ],
+   "c": [
+    "cream",
+    "cream",
+    "cream2"
+   ]
+  },
+  {
+   "g": "Sig",
+   "box": [
+    -6,
+    -7,
+    10,
+    6,
+    2,
+    11
+   ],
+   "c": [
+    "mouth"
+   ]
+  },
+  {
+   "g": "Sig",
+   "box": [
+    6,
+    -7,
+    11,
+    7,
+    2,
+    13
+   ],
+   "c": [
+    "cream",
+    "cream2"
+   ],
+   "mirror": true
+  },
+  {
+   "g": "Sig",
+   "box": [
+    -2,
+    -6,
+    11,
+    2,
+    0,
+    12
+   ],
+   "c": [
+    "pink"
+   ]
+  },
+  {
+   "g": "Sig",
+   "box": [
+    -2,
+    -6,
+    12,
+    2,
+    -2,
+    13
+   ],
+   "c": [
+    "pink"
+   ]
+  },
+  {
+   "g": "Head",
+   "box": [
+    -8,
+    -6,
+    13,
+    8,
+    5,
+    14
+   ],
+   "c": [
+    "g1",
+    "g1",
+    "g3",
+    "g2"
+   ]
+  },
+  {
+   "g": "Head",
+   "box": [
+    -7,
+    -5,
+    14,
+    7,
+    5,
+    17
+   ],
+   "c": [
+    "g1",
+    "g2",
+    "g1",
+    "g3"
+   ]
+  },
+  {
+   "g": "Head",
+   "box": [
+    7,
+    -5,
+    14,
+    8,
+    4,
+    17
+   ],
+   "c": [
+    "g1",
+    "g2",
+    "g1",
+    "g3"
+   ],
+   "mirror": true
+  },
+  {
+   "g": "Head",
+   "box": [
+    4,
+    -5,
+    17,
+    8,
+    -1,
+    18
+   ],
+   "c": [
+    "g1",
+    "g2",
+    "g1",
+    "g3"
+   ],
+   "mirror": true
+  },
+  {
+   "g": "Head",
+   "box": [
+    -7,
+    -3,
+    17,
+    7,
+    4,
+    18
+   ],
+   "c": [
+    "g1",
+    "g3",
+    "g1",
+    "g2"
+   ]
+  },
+  {
+   "g": "Head",
+   "box": [
+    -7,
+    2,
+    11,
+    7,
+    5,
+    13
+   ],
+   "c": [
+    "g1",
+    "g2",
+    "g1",
+    "g3"
+   ]
+  },
+  {
+   "g": "Head",
+   "box": [
+    -6,
+    2,
+    11,
+    6,
+    3,
+    13
+   ],
+   "c": [
+    "mouth"
+   ]
+  },
+  {
+   "g": "Head",
+   "box": [
+    -6,
+    -5,
+    13,
+    6,
+    2,
+    14
+   ],
+   "c": [
+    "mouth"
+   ]
+  },
+  {
+   "g": "Head",
+   "box": [
+    3,
+    -5,
+    14,
+    7,
+    -4,
+    18
+   ],
+   "c": [
+    "white"
+   ],
+   "mirror": true
+  },
+  {
+   "g": "Head",
+   "box": [
+    3,
+    -5,
+    14,
+    5,
+    -4,
+    16
+   ],
+   "c": [
+    "ink"
+   ],
+   "mirror": true
+  },
+  {
+   "g": "Head",
+   "box": [
+    0,
+    -7,
+    15,
+    2,
+    -1,
+    17
+   ],
+   "c": [
+    "g1",
+    "g2",
+    "g1",
+    "g3"
+   ],
+   "mirror": true
+  },
+  {
+   "g": "Head",
+   "box": [
+    2,
+    -7,
+    16,
+    4,
+    -1,
+    18
+   ],
+   "c": [
+    "g1",
+    "g2",
+    "g1",
+    "g3"
+   ],
+   "mirror": true
+  },
+  {
+   "g": "Head",
+   "box": [
+    4,
+    -7,
+    17,
+    6,
+    -1,
+    19
+   ],
+   "c": [
+    "g1",
+    "g2",
+    "g1",
+    "g3"
+   ],
+   "mirror": true
+  },
+  {
+   "g": "Head",
+   "box": [
+    6,
+    -7,
+    18,
+    7,
+    -1,
+    20
+   ],
+   "c": [
+    "g1",
+    "g2",
+    "g1",
+    "g3"
+   ],
+   "mirror": true
+  },
+  {
+   "g": "Head",
+   "box": [
+    7,
+    -7,
+    17,
+    8,
+    -1,
+    19
+   ],
+   "c": [
+    "g1",
+    "g2",
+    "g1",
+    "g3"
+   ],
+   "mirror": true
+  },
+  {
+   "g": "Head",
+   "box": [
+    -2,
+    -6,
+    14,
+    2,
+    -5,
+    15
+   ],
+   "c": [
+    "g1",
+    "g3"
+   ]
+  },
+  {
+   "g": "Head",
+   "box": [
+    1,
+    -6,
+    14,
+    2,
+    -5,
+    15
+   ],
+   "c": [
+    "ink"
+   ],
+   "mirror": true
+  },
+  {
+   "ball": [
+    12.6,
+    -5.5,
+    9.0,
+    4.7
+   ],
+   "c": [
+    "g1",
+    "g2",
+    "g3",
+    "g1",
+    "g2"
+   ],
+   "g": "FistL",
+   "mirror": true,
+   "mirror_group": "FistR"
+  },
+  {
+   "cyl": [
+    "x",
+    -5.5,
+    9.0,
+    4.0,
+    8,
+    10
+   ],
+   "c": [
+    "yellow"
+   ],
+   "g": "FistL",
+   "mirror": true,
+   "mirror_group": "FistR"
+  },
+  {
+   "cyl": [
+    "x",
+    -5.5,
+    9.0,
+    2.4,
+    7,
+    8
+   ],
+   "c": [
+    "g1",
+    "g2"
+   ],
+   "g": "FistL",
+   "mirror": true,
+   "mirror_group": "FistR"
+  }
+ ]
+}

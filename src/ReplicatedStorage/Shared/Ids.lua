@@ -50,4 +50,10 @@ Ids.PRODUCTS = {
 	"product_shield_breaker",
 }
 
+-- M1-01 (m1-contract.md sections C, D, G): ids the remotes and the skin key on.
+Ids.BANDS = { "easy", "fair", "hard", "veryHard", "brutal", "impossible" } -- order of Config.Fight.BANDS
+Ids.GRADES = { "perfect", "good", "miss" }
+Ids.CONTEXTS = { "bag", "fight" }
+Ids.GROUPS = { "Body", "Head", "FistL", "FistR", "Sig" } -- a boss's moving groups (MeshPart names), structure
+
 return Ids

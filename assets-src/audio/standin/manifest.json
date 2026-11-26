@@ -1,0 +1,204 @@
+{
+ "theme": null,
+ "format": "wav",
+ "formats": [
+  "wav"
+ ],
+ "sounds": [
+  {
+   "name": "thud_soft_1",
+   "file": "thud_soft_1.wav",
+   "files": [
+    "thud_soft_1.wav"
+   ],
+   "sound": "thump/soft",
+   "dur_s": 0.086,
+   "lufs_max": -20.0,
+   "loop": false,
+   "ok": true,
+   "member": {
+    "n": 4,
+    "of": 8,
+    "recording": "recording 4 of 8"
+   }
+  },
+  {
+   "name": "thud_soft_2",
+   "file": "thud_soft_2.wav",
+   "files": [
+    "thud_soft_2.wav"
+   ],
+   "sound": "thump/soft",
+   "dur_s": 0.086,
+   "lufs_max": -19.4,
+   "loop": false,
+   "ok": true,
+   "member": {
+    "n": 3,
+    "of": 8,
+    "recording": "recording 3 of 8"
+   }
+  },
+  {
+   "name": "thud_soft_3",
+   "file": "thud_soft_3.wav",
+   "files": [
+    "thud_soft_3.wav"
+   ],
+   "sound": "thump/soft",
+   "dur_s": 0.086,
+   "lufs_max": -19.3,
+   "loop": false,
+   "ok": true,
+   "member": {
+    "n": 2,
+    "of": 8,
+    "recording": "recording 2 of 8"
+   }
+  },
+  {
+   "name": "thud_book_1",
+   "file": "thud_book_1.wav",
+   "files": [
+    "thud_book_1.wav"
+   ],
+   "sound": "thump/book",
+   "dur_s": 0.151,
+   "lufs_max": -18.5,
+   "loop": false,
+   "ok": true,
+   "member": {
+    "n": 1,
+    "of": 1,
+    "recording": "recording 1 of 1"
+   }
+  },
+  {
+   "name": "thud_book_2",
+   "file": "thud_book_2.wav",
+   "files": [
+    "thud_book_2.wav"
+   ],
+   "sound": "thump/book",
+   "dur_s": 0.151,
+   "lufs_max": -19.1,
+   "loop": false,
+   "ok": true,
+   "member": {
+    "n": 1,
+    "of": 1,
+    "recording": "recording 1 of 1"
+   }
+  },
+  {
+   "name": "thud_book_3",
+   "file": "thud_book_3.wav",
+   "files": [
+    "thud_book_3.wav"
+   ],
+   "sound": "thump/book",
+   "dur_s": 0.141,
+   "lufs_max": -18.8,
+   "loop": false,
+   "ok": true,
+   "member": {
+    "n": 1,
+    "of": 1,
+    "recording": "recording 1 of 1"
+   }
+  },
+  {
+   "name": "thud_drop_1",
+   "file": "thud_drop_1.wav",
+   "files": [
+    "thud_drop_1.wav"
+   ],
+   "sound": "hit/drop",
+   "dur_s": 0.232,
+   "lufs_max": -16.2,
+   "loop": false,
+   "ok": true,
+   "member": {
+    "n": 2,
+    "of": 2,
+    "recording": "recording 2 of 2"
+   }
+  },
+  {
+   "name": "thud_drop_2",
+   "file": "thud_drop_2.wav",
+   "files": [
+    "thud_drop_2.wav"
+   ],
+   "sound": "hit/drop",
+   "dur_s": 0.235,
+   "lufs_max": -16.2,
+   "loop": false,
+   "ok": true,
+   "member": {
+    "n": 1,
+    "of": 2,
+    "recording": "recording 1 of 2"
+   }
+  },
+  {
+   "name": "thud_drop_3",
+   "file": "thud_drop_3.wav",
+   "files": [
+    "thud_drop_3.wav"
+   ],
+   "sound": "hit/drop",
+   "dur_s": 0.235,
+   "lufs_max": -16.2,
+   "loop": false,
+   "ok": true,
+   "member": {
+    "n": 1,
+    "of": 2,
+    "recording": "recording 1 of 2"
+   }
+  },
+  {
+   "name": "swish",
+   "file": "swish.wav",
+   "files": [
+    "swish.wav"
+   ],
+   "sound": "flick/thin",
+   "dur_s": 0.214,
+   "lufs_max": -14.1,
+   "loop": false,
+   "ok": true,
+   "member": {
+    "n": 5,
+    "of": 5,
+    "recording": "recording 5 of 5"
+   }
+  },
+  {
+   "name": "swish2",
+   "file": "swish2.wav",
+   "files": [
+    "swish2.wav"
+   ],
+   "sound": "swish/flick",
+   "dur_s": 0.318,
+   "lufs_max": -14.8,
+   "loop": false,
+   "ok": true
+  },
+  {
+   "name": "sting",
+   "file": "sting.wav",
+   "files": [
+    "sting.wav"
+   ],
+   "sound": "tick/glass",
+   "dur_s": 0.644,
+   "lufs_max": -14.7,
+   "loop": false,
+   "ok": true,
+   "pitch": "D6"
+  }
+ ]
+}

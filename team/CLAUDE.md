@@ -70,6 +70,13 @@ Fairness line: paid advantages are allowed, including attacking products (brief,
   `StarterPlayer` (`StarterPlayerScripts/`, `StarterCharacterScripts/`), `StarterGui`. Rojo file names:
   `*.server.lua` Script, `*.client.lua` LocalScript, `*.lua` ModuleScript, `init*.lua` turns its folder into that
   script, directories are Folders. Synced instances carry a `DevSync` attribute; deleting a file removes its instance.
+- **Module cache rule (M1-01b):** in edit mode `require` caches per ModuleScript instance and setting `Source` does not
+  clear it. So whenever a sync changes anything, the loader swaps EVERY synced ModuleScript for a fresh instance (same
+  name, attributes, tags, children; one swap each, no clones), because a changed module also stales every module that
+  required it. After a sync a plain `require` is fresh. Never edit `Source` in place to refresh code, and never
+  `:Clone()` a tree to dodge the cache (that made 24 duplicates once); sync again instead. References to old module
+  instances held across a sync are dead: fetch them again by path. Checks that need two versions side by side (the
+  skin check) still clone, into a throwaway folder they destroy.
 - A sync pulls everyone's files: a broken file you don't own shows up in your test. Report it, don't fix it. After
   each wave the orchestrator syncs once and runs the smoke check.
 

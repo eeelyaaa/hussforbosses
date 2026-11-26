@@ -1,0 +1,17 @@
+{
+  "_doc": "The Huss boxing gloves, same data format as the bosses (see z1_t1.json). Cube 0.14 stud, about head size (1.3 studs tall, 1.0 wide). GloveL is authored at x = +10 cubes (0 -> its wrist), GloveR is the mirrored copy at x = -10 (a real mirror, faces wound outward, not a negative scale). The fist hangs below the wrist (Blender -z = Roblox down) and the knuckles point Blender -y (Roblox forward); the thumb is on the inner side. Pivot = the wrist, the centre of the yellow cuff's bottom face. Huss red #E02A2A (style guide section 3) with a slightly darker scatter shade; the yellow is the boss-band yellow (TEAM CALL: not Shop gold, which means Robux).",
+  "id": "gloves",
+  "cube": 0.14,
+  "palette": { "red": "#E02A2A", "red2": "#C92424", "yellow": "#F1D417" },
+  "groups": {
+    "GloveL": { "pivot": [10, 0, 0] },
+    "GloveR": { "pivot": [-10, 0, 0] }
+  },
+  "fills": [
+    { "g": "GloveL", "ball": [10,-1,-3.5, 3.7], "c": ["red","red","red2"], "mirror": true, "mirror_group": "GloveR" },
+    { "g": "GloveL", "box": [5,-4,-5, 7,-1,-2], "c": ["red","red2","red"],  "mirror": true, "mirror_group": "GloveR" },
+    { "g": "GloveL", "box": [7,-3,0, 13,3,2],   "c": ["yellow"],            "mirror": true, "mirror_group": "GloveR" },
+    { "g": "GloveL", "box": [8,-4,0, 12,4,2],   "c": ["yellow"],            "mirror": true, "mirror_group": "GloveR" },
+    { "g": "GloveL", "box": [8,-2,-1, 12,2,0],  "c": ["red2"],              "mirror": true, "mirror_group": "GloveR" }
+  ]
+}

@@ -1,4 +1,78 @@
 --!strict
 -- brickbrawl / Icons: asset id per icon key (the 64 icons on ui-kit board 04). Ids recorded in team/assets.md when uploaded
--- Skeleton at M0. Filled from the pack by the task that owns it (M1 to M3, gui-designer).
-return {}
+-- Declared at M1-02 (gui-designer): every key of board 04, in the board's order, id 0 = not uploaded, so the Kit draws a plain
+-- stand-in. TEAM CALL: at M1 nothing is uploaded (the plan's M1 asset list has no icon); the Huss button shows "HUSS!" with no
+-- glove. The uploads are M3; whoever uploads one replaces its 0 here and records it in team/assets.md. No key is ever added
+-- that is not on the board.
+-- Group order: stats (8), HUD and actions (20), status (11), zone badges (6), shop products (19) = 64.
+return {
+	-- stats
+	power = 0,
+	cash = 0,
+	punchStrength = 0,
+	punchSpeed = 0,
+	spinTicket = 0,
+	heart = 0,
+	heartLost = 0,
+	rebirthStar = 0,
+	-- HUD and actions
+	hussGlove = 0,
+	shop = 0,
+	rebirth = 0,
+	upgrade = 0,
+	pickUp = 0,
+	place = 0,
+	grab = 0,
+	steal = 0,
+	sell = 0,
+	swap = 0,
+	run = 0,
+	done = 0,
+	settings = 0,
+	music = 0,
+	effects = 0,
+	bagPanel = 0,
+	luckySpin = 0,
+	firstArrow = 0,
+	pointerArrow = 0,
+	bossBeaten = 0,
+	-- status
+	lockShield = 0,
+	shield = 0,
+	shieldDown = 0,
+	shieldBroken = 0,
+	locked = 0,
+	timer = 0,
+	stealAlert = 0,
+	hazard = 0,
+	nearImpossible = 0,
+	offlineEarnings = 0,
+	deliveryCrate = 0,
+	-- zone badges
+	zone1 = 0,
+	zone2 = 0,
+	zone3 = 0,
+	zone4 = 0,
+	zone5 = 0,
+	zone6 = 0,
+	-- shop products
+	autoPunch = 0,
+	perfectAutoPunch = 0,
+	power2x = 0,
+	cash2x = 0,
+	fastCarry = 0,
+	longLock = 0,
+	extraSpots = 0,
+	quickHands = 0,
+	ironGrip = 0,
+	starterPack = 0,
+	cashPackSmall = 0,
+	cashPackMedium = 0,
+	cashPackLarge = 0,
+	cashPackHuge = 0,
+	spin1 = 0,
+	spin3 = 0,
+	spin10 = 0,
+	instantShield = 0,
+	shieldBreaker = 0,
+}

@@ -1,0 +1,99 @@
+{
+ "id": "gloves",
+ "cube": 0.14,
+ "cubes": 670,
+ "bbox_cubes": [
+  -14,
+  -5,
+  -7,
+  14,
+  4,
+  2
+ ],
+ "tris_atlas": 1544,
+ "meshes_atlas": [
+  [
+   "GloveL",
+   772
+  ],
+  [
+   "GloveR",
+   772
+  ]
+ ],
+ "tris_perrole": 1544,
+ "meshes_perrole": [
+  [
+   "GloveL_red",
+   326
+  ],
+  [
+   "GloveL_red2",
+   198
+  ],
+  [
+   "GloveL_yellow",
+   248
+  ],
+  [
+   "GloveR_red",
+   326
+  ],
+  [
+   "GloveR_red2",
+   198
+  ],
+  [
+   "GloveR_yellow",
+   248
+  ]
+ ],
+ "tris_atlas_no_seam_faces": 1544,
+ "tris_perrole_greedy_merged_count_only": 674,
+ "size_studs_blender_xyz": [
+  3.92,
+  1.26,
+  1.26
+ ],
+ "size_studs_roblox_xyz": [
+  3.92,
+  1.26,
+  1.26
+ ],
+ "groups": {
+  "GloveL": {
+   "pivot_cubes_blender": [
+    10,
+    0,
+    0
+   ],
+   "pivot_studs_blender": [
+    1.4,
+    0.0,
+    0.0
+   ],
+   "pivot_studs_roblox_offset_from_model_pivot": [
+    -1.4,
+    0.0,
+    0.0
+   ]
+  },
+  "GloveR": {
+   "pivot_cubes_blender": [
+    -10,
+    0,
+    0
+   ],
+   "pivot_studs_blender": [
+    -1.4,
+    0.0,
+    0.0
+   ],
+   "pivot_studs_roblox_offset_from_model_pivot": [
+    1.4,
+    0.0,
+    0.0
+   ]
+  }
+ }
+}
