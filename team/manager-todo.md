@@ -4,7 +4,7 @@ The one place things wait for you. The build keeps going around every item. Shor
 Groups: do first, set up, look at or listen to, questions, confirm, done. Updated at the M1 close (2026-11-25).
 
 ## Do first (unblocks the most)
-1. **Create the 10 passes and 9 developer products under the group's game and paste their ids here.**
+1. **[MOVED TO THE TEAM, 2026-11-25: the manager said to create them by computer use; done at the start of M2]** Create the 10 passes and 9 developer products under the group's game and paste their ids here.
    Creator Dashboard, switch to the group Huss for Bosses, Creations, Huss for Bosses, Monetization. Prices are
    the brief's starting figures (system 13); prices are yours.
    - Passes: Create a Pass, name, description, create; open it, Sales, switch on "Item for sale", set the price,
@@ -44,9 +44,9 @@ Groups: do first, set up, look at or listen to, questions, confirm, done. Update
    (one line, `team/CLAUDE.md`), but the hand-imported meshes would need re-importing, so save before closing Studio.
 
 ## Set up
-3. **Set the server size to 8.** Creator Dashboard, the game, its place's settings, Maximum Visitors: 8
+3. **[MOVED TO THE TEAM, 2026-11-25: "do the majority of the set up yourself"]** **Set the server size to 8.** Creator Dashboard, the game, its place's settings, Maximum Visitors: 8
    (`UNVERIFIED`: the exact page; the team names it when it asks).
-4. **Each future audio upload** needs the Audio Upload License Agreement ticked in the Creator Dashboard, which needs
+4. **[ANSWERED 2026-11-25: "for the future audio i say YES to everything. feel free to upload everything at m4"]** **Each future audio upload** needs the Audio Upload License Agreement ticked in the Creator Dashboard, which needs
    your yes in chat; the yes at M1 covered its 8 files only (M4 uploads more).
 
 ## Look at or listen to
@@ -79,13 +79,13 @@ Groups: do first, set up, look at or listen to, questions, confirm, done. Update
 (none open; each one here would have a default the build is using, marked `PROVISIONAL` on the board)
 
 ## Confirm
-9. **The pack's media is not backed up in any git repo in full.** The game repo commits the spec media (UI kit,
+9. **[DONE 2026-11-25: committed and pushed to the game repo, concepts.figcraft via Git LFS]** **The pack's media is not backed up in any git repo in full.** The game repo commits the spec media (UI kit,
    base-layout plans, the Brick Brawl concepts, your references, the huss recording) but ignores about 280 MB of
    exploration (the four other look directions, game page concepts, layout renders): TEAM CALL M0-1. Those stay
    on disk in `projects/huss-for-bosses/team/pack/` and `pitches/huss-for-bosses/` (ro-team doesn't track
    `pitches/` either). If you want them kept somewhere, copy the folder to a backup drive; nothing in the build
    needs them.
-10. **Delete a stray folder:** `C:/team/verification/m1-chomp-frog/` (4 duplicate renders written by a wrong path in
+10. **[You said to delete it; Claude Code's safety check blocked the delete again and needs your own approval. Run the line in the chat, or delete the folder in File Explorer]** **Delete a stray folder:** `C:/team/verification/m1-chomp-frog/` (4 duplicate renders written by a wrong path in
     M1-03; the delete was blocked by a safety check). Harmless; remove it by hand when you like.
 
 ## Your notes for later milestones (2026-11-25, your words; not questions)

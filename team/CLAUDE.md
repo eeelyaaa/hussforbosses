@@ -17,6 +17,11 @@ The manager answered boxes 1 to 5 yes, in their words:
 6. Box 6 (installing nothing new) was not answered: **the build installs nothing**. Anything it turns out to need
    is asked for separately first.
 
+**Added by the manager on 2026-11-25 after the M1 playtest** (their words in `decisions.md`): the team creates the 10 passes
+and 9 developer products itself (computer use, Creator Dashboard, the brief's prices) and does most of the dashboard
+setup itself, server size included; for audio "YES to everything": all M4 sounds are uploaded with the license
+agreement ticked. Publishing the game and group settings stay the manager's.
+
 Never covered: publishing, Robux and prices, game, group and account settings, signing in, pushing, and anything
 the brief doesn't contain.
 

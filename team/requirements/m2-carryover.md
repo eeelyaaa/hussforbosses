@@ -68,3 +68,16 @@ brackets, all under `verification/` unless noted. The M2 planner reads this firs
 - `studio/checks/FightCameraProbe.client.lua` is not wired into `CheckAll` (install by hand as in `m1-26-fight-camera.md`); wire it if the camera changes again.
 - Evidence files not written under the planned names: `m1-skin-check.md` (see `m1-26-fight-camera.md`, `m1-24-pads-and-keys.md`) and `m1-envelope-probe.md` (see `m1-13-audio.md`).
 - The hand-built-in-the-place list (marker, loader, imported meshes, uploaded clips) is in `build-state.md`; the manager saves the place (`manager-todo.md` item 2).
+
+## Added 2026-11-25 from the manager's M1 playtest (see `decisions.md`, "the manager's decisions after playing M1"; these are the manager's words, so they are spec)
+| # | Item | Owner | Milestone |
+|---|---|---|---|
+| P1 | World labels scale with distance (no constant-pixel BillboardGui over world objects); fix the pad number; scan the repo for any other | gui-designer + scripter | M2 |
+| P2 | Ring a little quicker in general; timing a little easier | game-designer (numbers) + scripter | M2 |
+| P3 | Untimed tap = one punch (bag +1; boss damage by Strength); timed = the three-punch burst, PERFECT floats above the button, more damage. Replaces "a Miss launches no burst" | game-designer, scripter (server), gui-designer, audio (single huss on an untimed tap: 02A/01A already uploaded), qa-exploit-reviewer (rate caps) | M2 |
+| P4 | Better fight angle for the player (avatar reads large lower-left) | scripter + art-director look | M2 |
+| P5 | Bosses patrol back and forth along their region; player walks up to start the fight | scripter, animator-vfx, builder | M2 design, M3 world |
+| P6 | More intense huss animation and fighting | animator-vfx, audio-specialist | M4 |
+| P7 | Stud texture vanishes and returns with distance: find cause, fix | builder + tech-lead | M2 |
+| P8 | Create the 10 passes and 9 developer products by computer use at the brief's prices; set the server size to 8; most other dashboard setup | main session (computer use) | M2 start |
+| P9 | Audio: upload everything at M4, the manager's yes covers the license agreement ticks | main session | M4 |
