@@ -1,0 +1,61 @@
+{
+ "event": "one punch on the bag or a boss",
+ "feel": "one clear 'huss', about 0.2 s",
+ "question": "DECIDED: the manager picked A (huss 1 as cut) as the second take of the single huss. The other candidates are kept for the record and are not built.",
+ "candidates": [
+  {
+   "label": "A",
+   "file": "a_huss1.wav",
+   "source": "PICKED by the manager (2026-11-25): second take of the single huss, alternating with slot 02 A. huss 1, 0.080-0.320 s of your recording, cut only (3 ms fade in, 8 ms fade out), no other processing",
+   "length": "0.240 s",
+   "peak": "-4.0 dBFS",
+   "lead_silence": "23 ms to -30 dB",
+   "notes": "RMS -15.7 dBFS; first of group 1; starts from silence with a breath before the voice"
+  },
+  {
+   "label": "B",
+   "file": "b_huss2.wav",
+   "source": "Not used. huss 2, 0.320-0.496 s of your recording, cut only (3 ms fade in, 8 ms fade out), no other processing",
+   "length": "0.176 s",
+   "peak": "-2.8 dBFS",
+   "lead_silence": "13 ms to -30 dB",
+   "notes": "RMS -15.9 dBFS; middle of group 1; cut out of the dips on both sides (-47 and -41 dB)"
+  },
+  {
+   "label": "C",
+   "file": "c_huss3.wav",
+   "source": "Not used. huss 3, 0.496-0.692 s of your recording, cut only (3 ms fade in, 8 ms fade out), no other processing",
+   "length": "0.196 s",
+   "peak": "-3.2 dBFS",
+   "lead_silence": "22 ms to -30 dB",
+   "notes": "RMS -15.8 dBFS; last of group 1; ends into silence; pitch measured about 4% above huss 1"
+  },
+  {
+   "label": "D",
+   "file": "d_huss4.wav",
+   "source": "Not used. huss 4, 1.045-1.284 s of your recording, cut only (3 ms fade in, 8 ms fade out), no other processing",
+   "length": "0.239 s",
+   "peak": "-3.4 dBFS",
+   "lead_silence": "30 ms to -30 dB",
+   "notes": "RMS -15.9 dBFS; first of group 2; lowest level at both cut points of all six (-50 and -51 dB)"
+  },
+  {
+   "label": "E",
+   "file": "e_huss5.wav",
+   "source": "Not used. huss 5, 1.284-1.465 s of your recording, cut only (3 ms fade in, 8 ms fade out), no other processing",
+   "length": "0.181 s",
+   "peak": "-3.4 dBFS",
+   "lead_silence": "17 ms to -30 dB",
+   "notes": "RMS -16.7 dBFS; middle of group 2"
+  },
+  {
+   "label": "F",
+   "file": "f_huss6.wav",
+   "source": "Not used. huss 6, 1.465-1.662 s of your recording, cut only (3 ms fade in, 8 ms fade out), no other processing",
+   "length": "0.197 s",
+   "peak": "-3.4 dBFS",
+   "lead_silence": "23 ms to -30 dB",
+   "notes": "RMS -16.2 dBFS; last of group 2; ends into silence"
+  }
+ ]
+}

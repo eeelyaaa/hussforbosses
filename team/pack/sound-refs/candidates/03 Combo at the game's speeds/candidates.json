@@ -1,0 +1,56 @@
+{
+ "event": "one three-punch combo at the brief's punch speeds (ring 0.60 s at Speed 1, 0.33 s at Speed 10)",
+ "feel": "huss huss huss",
+ "question": "DECIDED: the manager picked the first group as recorded (E), then asked for the version without the breath at the start: F is the voice of every landed burst. A to D are kept for the record and are not built.",
+ "candidates": [
+  {
+   "label": "A",
+   "file": "a_one_huss_x3_speed1.wav",
+   "source": "Not used (superseded by the pick of E). DEFAULT. One huss (huss 4) three times, 0.60 s apart; an edit of your recording: cuts placed on a timeline, no pitch change or other processing",
+   "length": "1.50 s",
+   "peak": "-3.4 dBFS",
+   "notes": "Speed level 1. In game the 2nd and 3rd would also be raised slightly in pitch (not in this file)"
+  },
+  {
+   "label": "B",
+   "file": "b_one_huss_x3_speed10.wav",
+   "source": "Not used (superseded by the pick of E). DEFAULT at top speed. One huss (huss 4) three times, 0.33 s apart; an edit of your recording: cuts placed on a timeline, no pitch change or other processing",
+   "length": "0.96 s",
+   "peak": "-3.4 dBFS",
+   "notes": "Speed level 10; 0.09 s of quiet between husses, no overlap"
+  },
+  {
+   "label": "C",
+   "file": "c_three_husses_speed1.wav",
+   "source": "Not used (superseded by the pick of E). ALTERNATIVE. Husses 1, 2, 3 in recorded order, 0.60 s apart; an edit of your recording: cuts placed on a timeline, no pitch change or other processing",
+   "length": "1.50 s",
+   "peak": "-2.8 dBFS",
+   "notes": "Speed level 1; the third measures about 4% higher in pitch as recorded"
+  },
+  {
+   "label": "D",
+   "file": "d_three_husses_speed10.wav",
+   "source": "Not used (superseded by the pick of E). ALTERNATIVE at top speed. Husses 1, 2, 3, 0.33 s apart; an edit of your recording: cuts placed on a timeline, no pitch change or other processing",
+   "length": "0.96 s",
+   "peak": "-2.8 dBFS",
+   "notes": "Speed level 10"
+  },
+  {
+   "label": "E",
+   "file": "e_group1_as_recorded.wav",
+   "source": "Picked first by the manager (2026-11-25), then replaced by F at their request (\"choose the one without the breath\"). Reference: the first group of three as you recorded it (0.080-0.692 s), cut and fades only",
+   "length": "0.612 s",
+   "loudness": "-11.7 LUFS",
+   "peak": "-2.8 dBFS",
+   "notes": "husses start 213 and 188 ms apart, faster than the game ever punches"
+  },
+  {
+   "label": "F",
+   "file": "f_group1_no_breath.wav",
+   "source": "PICKED (manager, 2026-11-25: \"choose the one without the breath\"): E with the first 18 ms of breath trimmed and a 4 ms fade in; nothing else changed, same rhythm",
+   "length": "0.594 s",
+   "peak": "same as E",
+   "notes": "the first huss now starts about 10 ms into the file instead of about 28 ms; husses are still 213 and 188 ms apart"
+  }
+ ]
+}

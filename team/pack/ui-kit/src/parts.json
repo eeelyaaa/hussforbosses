@@ -1,0 +1,357 @@
+{
+ "i/alarm": [
+  "C:/Users/elya/Desktop/ro-team/pitches/huss-for-bosses/ui-kit/src/icons/alarm.png",
+  458,
+  470
+ ],
+ "i/arrow-white": [
+  "C:/Users/elya/Desktop/ro-team/pitches/huss-for-bosses/ui-kit/src/icons/arrow-white.png",
+  294,
+  234
+ ],
+ "i/arrow-yellow": [
+  "C:/Users/elya/Desktop/ro-team/pitches/huss-for-bosses/ui-kit/src/icons/arrow-yellow.png",
+  252,
+  294
+ ],
+ "i/auto-punch": [
+  "C:/Users/elya/Desktop/ro-team/pitches/huss-for-bosses/ui-kit/src/icons/auto-punch.png",
+  336,
+  458
+ ],
+ "i/bag": [
+  "C:/Users/elya/Desktop/ro-team/pitches/huss-for-bosses/ui-kit/src/icons/bag.png",
+  408,
+  458
+ ],
+ "i/cash-huge": [
+  "C:/Users/elya/Desktop/ro-team/pitches/huss-for-bosses/ui-kit/src/icons/cash-huge.png",
+  482,
+  452
+ ],
+ "i/cash-large": [
+  "C:/Users/elya/Desktop/ro-team/pitches/huss-for-bosses/ui-kit/src/icons/cash-large.png",
+  474,
+  434
+ ],
+ "i/cash-medium": [
+  "C:/Users/elya/Desktop/ro-team/pitches/huss-for-bosses/ui-kit/src/icons/cash-medium.png",
+  548,
+  272
+ ],
+ "i/cash-small": [
+  "C:/Users/elya/Desktop/ro-team/pitches/huss-for-bosses/ui-kit/src/icons/cash-small.png",
+  404,
+  300
+ ],
+ "i/cash2x": [
+  "C:/Users/elya/Desktop/ro-team/pitches/huss-for-bosses/ui-kit/src/icons/cash2x.png",
+  492,
+  280
+ ],
+ "i/check": [
+  "C:/Users/elya/Desktop/ro-team/pitches/huss-for-bosses/ui-kit/src/icons/check.png",
+  454,
+  382
+ ],
+ "i/crate": [
+  "C:/Users/elya/Desktop/ro-team/pitches/huss-for-bosses/ui-kit/src/icons/crate.png",
+  442,
+  462
+ ],
+ "i/extra-spots": [
+  "C:/Users/elya/Desktop/ro-team/pitches/huss-for-bosses/ui-kit/src/icons/extra-spots.png",
+  460,
+  408
+ ],
+ "i/fast-carry": [
+  "C:/Users/elya/Desktop/ro-team/pitches/huss-for-bosses/ui-kit/src/icons/fast-carry.png",
+  450,
+  378
+ ],
+ "i/grab": [
+  "C:/Users/elya/Desktop/ro-team/pitches/huss-for-bosses/ui-kit/src/icons/grab.png",
+  292,
+  268
+ ],
+ "i/hazard": [
+  "C:/Users/elya/Desktop/ro-team/pitches/huss-for-bosses/ui-kit/src/icons/hazard.png",
+  484,
+  444
+ ],
+ "i/heart-lost": [
+  "C:/Users/elya/Desktop/ro-team/pitches/huss-for-bosses/ui-kit/src/icons/heart-lost.png",
+  292,
+  266
+ ],
+ "i/heart": [
+  "C:/Users/elya/Desktop/ro-team/pitches/huss-for-bosses/ui-kit/src/icons/heart.png",
+  458,
+  410
+ ],
+ "i/instant-shield": [
+  "C:/Users/elya/Desktop/ro-team/pitches/huss-for-bosses/ui-kit/src/icons/instant-shield.png",
+  404,
+  438
+ ],
+ "i/iron-grip": [
+  "C:/Users/elya/Desktop/ro-team/pitches/huss-for-bosses/ui-kit/src/icons/iron-grip.png",
+  468,
+  396
+ ],
+ "i/long-lock": [
+  "C:/Users/elya/Desktop/ro-team/pitches/huss-for-bosses/ui-kit/src/icons/long-lock.png",
+  358,
+  420
+ ],
+ "i/music": [
+  "C:/Users/elya/Desktop/ro-team/pitches/huss-for-bosses/ui-kit/src/icons/music.png",
+  398,
+  394
+ ],
+ "i/offline": [
+  "C:/Users/elya/Desktop/ro-team/pitches/huss-for-bosses/ui-kit/src/icons/offline.png",
+  468,
+  442
+ ],
+ "i/padlock": [
+  "C:/Users/elya/Desktop/ro-team/pitches/huss-for-bosses/ui-kit/src/icons/padlock.png",
+  394,
+  436
+ ],
+ "i/pickup": [
+  "C:/Users/elya/Desktop/ro-team/pitches/huss-for-bosses/ui-kit/src/icons/pickup.png",
+  462,
+  462
+ ],
+ "i/place": [
+  "C:/Users/elya/Desktop/ro-team/pitches/huss-for-bosses/ui-kit/src/icons/place.png",
+  450,
+  422
+ ],
+ "i/power2x": [
+  "C:/Users/elya/Desktop/ro-team/pitches/huss-for-bosses/ui-kit/src/icons/power2x.png",
+  460,
+  278
+ ],
+ "i/quick-hands": [
+  "C:/Users/elya/Desktop/ro-team/pitches/huss-for-bosses/ui-kit/src/icons/quick-hands.png",
+  486,
+  370
+ ],
+ "i/run": [
+  "C:/Users/elya/Desktop/ro-team/pitches/huss-for-bosses/ui-kit/src/icons/run.png",
+  478,
+  356
+ ],
+ "i/sell": [
+  "C:/Users/elya/Desktop/ro-team/pitches/huss-for-bosses/ui-kit/src/icons/sell.png",
+  412,
+  416
+ ],
+ "i/settings": [
+  "C:/Users/elya/Desktop/ro-team/pitches/huss-for-bosses/ui-kit/src/icons/settings.png",
+  454,
+  444
+ ],
+ "i/shield-breaker": [
+  "C:/Users/elya/Desktop/ro-team/pitches/huss-for-bosses/ui-kit/src/icons/shield-breaker.png",
+  468,
+  466
+ ],
+ "i/shield-broken": [
+  "C:/Users/elya/Desktop/ro-team/pitches/huss-for-bosses/ui-kit/src/icons/shield-broken.png",
+  276,
+  302
+ ],
+ "i/shield-down": [
+  "C:/Users/elya/Desktop/ro-team/pitches/huss-for-bosses/ui-kit/src/icons/shield-down.png",
+  410,
+  448
+ ],
+ "i/shield": [
+  "C:/Users/elya/Desktop/ro-team/pitches/huss-for-bosses/ui-kit/src/icons/shield.png",
+  410,
+  448
+ ],
+ "i/skull": [
+  "C:/Users/elya/Desktop/ro-team/pitches/huss-for-bosses/ui-kit/src/icons/skull.png",
+  418,
+  410
+ ],
+ "i/sound": [
+  "C:/Users/elya/Desktop/ro-team/pitches/huss-for-bosses/ui-kit/src/icons/sound.png",
+  464,
+  364
+ ],
+ "i/speed": [
+  "C:/Users/elya/Desktop/ro-team/pitches/huss-for-bosses/ui-kit/src/icons/speed.png",
+  474,
+  356
+ ],
+ "i/spin1": [
+  "C:/Users/elya/Desktop/ro-team/pitches/huss-for-bosses/ui-kit/src/icons/spin1.png",
+  472,
+  462
+ ],
+ "i/spin10": [
+  "C:/Users/elya/Desktop/ro-team/pitches/huss-for-bosses/ui-kit/src/icons/spin10.png",
+  288,
+  304
+ ],
+ "i/spin3": [
+  "C:/Users/elya/Desktop/ro-team/pitches/huss-for-bosses/ui-kit/src/icons/spin3.png",
+  280,
+  312
+ ],
+ "i/star": [
+  "C:/Users/elya/Desktop/ro-team/pitches/huss-for-bosses/ui-kit/src/icons/star.png",
+  460,
+  432
+ ],
+ "i/starter-pack": [
+  "C:/Users/elya/Desktop/ro-team/pitches/huss-for-bosses/ui-kit/src/icons/starter-pack.png",
+  404,
+  440
+ ],
+ "i/steal": [
+  "C:/Users/elya/Desktop/ro-team/pitches/huss-for-bosses/ui-kit/src/icons/steal.png",
+  420,
+  434
+ ],
+ "i/strength": [
+  "C:/Users/elya/Desktop/ro-team/pitches/huss-for-bosses/ui-kit/src/icons/strength.png",
+  418,
+  428
+ ],
+ "i/swap": [
+  "C:/Users/elya/Desktop/ro-team/pitches/huss-for-bosses/ui-kit/src/icons/swap.png",
+  424,
+  442
+ ],
+ "i/ticket": [
+  "C:/Users/elya/Desktop/ro-team/pitches/huss-for-bosses/ui-kit/src/icons/ticket.png",
+  470,
+  310
+ ],
+ "i/timer": [
+  "C:/Users/elya/Desktop/ro-team/pitches/huss-for-bosses/ui-kit/src/icons/timer.png",
+  420,
+  482
+ ],
+ "i/toggle-on": [
+  "C:/Users/elya/Desktop/ro-team/pitches/huss-for-bosses/ui-kit/src/icons/toggle-on.png",
+  316,
+  206
+ ],
+ "i/trophy": [
+  "C:/Users/elya/Desktop/ro-team/pitches/huss-for-bosses/ui-kit/src/icons/trophy.png",
+  486,
+  438
+ ],
+ "i/zone1": [
+  "C:/Users/elya/Desktop/ro-team/pitches/huss-for-bosses/ui-kit/src/icons/zone1.png",
+  378,
+  466
+ ],
+ "i/zone2": [
+  "C:/Users/elya/Desktop/ro-team/pitches/huss-for-bosses/ui-kit/src/icons/zone2.png",
+  466,
+  418
+ ],
+ "i/zone3": [
+  "C:/Users/elya/Desktop/ro-team/pitches/huss-for-bosses/ui-kit/src/icons/zone3.png",
+  454,
+  466
+ ],
+ "i/zone4": [
+  "C:/Users/elya/Desktop/ro-team/pitches/huss-for-bosses/ui-kit/src/icons/zone4.png",
+  436,
+  466
+ ],
+ "i/zone5": [
+  "C:/Users/elya/Desktop/ro-team/pitches/huss-for-bosses/ui-kit/src/icons/zone5.png",
+  462,
+  406
+ ],
+ "i/zone6": [
+  "C:/Users/elya/Desktop/ro-team/pitches/huss-for-bosses/ui-kit/src/icons/zone6.png",
+  416,
+  476
+ ],
+ "s/bit-shark": [
+  "C:/Users/elya/Desktop/ro-team/pitches/huss-for-bosses/ui-kit/src/standins/bit-shark.png",
+  300,
+  405
+ ],
+ "s/chomp-frog": [
+  "C:/Users/elya/Desktop/ro-team/pitches/huss-for-bosses/ui-kit/src/standins/chomp-frog.png",
+  275,
+  204
+ ],
+ "s/frost-byte": [
+  "C:/Users/elya/Desktop/ro-team/pitches/huss-for-bosses/ui-kit/src/standins/frost-byte.png",
+  425,
+  515
+ ],
+ "s/snap-scorpion": [
+  "C:/Users/elya/Desktop/ro-team/pitches/huss-for-bosses/ui-kit/src/standins/snap-scorpion.png",
+  318,
+  395
+ ],
+ "s/star-golem": [
+  "C:/Users/elya/Desktop/ro-team/pitches/huss-for-bosses/ui-kit/src/standins/star-golem.png",
+  740,
+  1035
+ ],
+ "p/icon-cash": [
+  "C:/Users/elya/Desktop/ro-team/pitches/huss-for-bosses/concepts/brick-brawl/parts/icon-cash.png",
+  301,
+  254
+ ],
+ "p/icon-gem": [
+  "C:/Users/elya/Desktop/ro-team/pitches/huss-for-bosses/concepts/brick-brawl/parts/icon-gem.png",
+  299,
+  264
+ ],
+ "p/icon-glove": [
+  "C:/Users/elya/Desktop/ro-team/pitches/huss-for-bosses/concepts/brick-brawl/parts/icon-glove.png",
+  266,
+  283
+ ],
+ "p/icon-lock": [
+  "C:/Users/elya/Desktop/ro-team/pitches/huss-for-bosses/concepts/brick-brawl/parts/icon-lock.png",
+  258,
+  285
+ ],
+ "p/icon-power": [
+  "C:/Users/elya/Desktop/ro-team/pitches/huss-for-bosses/concepts/brick-brawl/parts/icon-power.png",
+  315,
+  296
+ ],
+ "p/icon-rebirth": [
+  "C:/Users/elya/Desktop/ro-team/pitches/huss-for-bosses/concepts/brick-brawl/parts/icon-rebirth.png",
+  267,
+  289
+ ],
+ "p/icon-shop": [
+  "C:/Users/elya/Desktop/ro-team/pitches/huss-for-bosses/concepts/brick-brawl/parts/icon-shop.png",
+  258,
+  274
+ ],
+ "p/icon-spin": [
+  "C:/Users/elya/Desktop/ro-team/pitches/huss-for-bosses/concepts/brick-brawl/parts/icon-spin.png",
+  294,
+  324
+ ],
+ "p/icon-up": [
+  "C:/Users/elya/Desktop/ro-team/pitches/huss-for-bosses/concepts/brick-brawl/parts/icon-up.png",
+  272,
+  306
+ ],
+ "i/perfect-auto-punch": [
+  "C:/Users/elya/Desktop/ro-team/pitches/huss-for-bosses/ui-kit/src/icons/perfect-auto-punch.png",
+  776,
+  996
+ ]
+}

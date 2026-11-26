@@ -1,0 +1,22 @@
+# Pack media: exploration history is ignored, the spec media is committed (team/decisions.md, TEAM CALL M0-1)
+team/pack/concepts/gym-zoo/
+team/pack/concepts/neon-knockout/
+team/pack/concepts/clay-kaiju/
+team/pack/concepts/snack-attack/
+team/pack/concepts/concepts.figcraft
+team/pack/game-page/**/*.png
+team/pack/game-page/**/*.webp
+team/pack/base-layout/view-*.png
+team/pack/base-layout/src/render-sources/
+
+# Tool outputs and local files
+__pycache__/
+*.pyc
+.venv/
+*.blend1
+tools/blender/out/
+tools/audio/out/
+*.rbxl.lock
+*.rbxlx.lock
+.DS_Store
+Thumbs.db

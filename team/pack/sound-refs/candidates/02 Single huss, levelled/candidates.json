@@ -1,0 +1,34 @@
+{
+ "event": "one punch, ready-to-ship versions",
+ "feel": "same huss, peak raised to -1 dBFS (+2.4 dB, plain gain)",
+ "question": "DECIDED: the manager picked A (huss 4, full, levelled) as the single huss. B and C are kept for the record and are not built.",
+ "candidates": [
+  {
+   "label": "A",
+   "file": "a_huss4_full_levelled.wav",
+   "source": "PICKED by the manager (2026-11-25): the single huss (owner's plain punch at a thief, any lone punch). huss 4 (1.045-1.284 s), cut, fades, +2.4 dB gain",
+   "length": "0.239 s",
+   "peak": "-1.0 dBFS",
+   "lead_silence": "30 ms to -30 dB",
+   "notes": "RMS -13.5 dBFS"
+  },
+  {
+   "label": "B",
+   "file": "b_huss4_tight_levelled.wav",
+   "source": "Not used. huss 4 trimmed tighter (1.072-1.262 s), 3 ms in, 12 ms out, +2.4 dB gain",
+   "length": "0.190 s",
+   "peak": "-1.0 dBFS",
+   "lead_silence": "3 ms to -30 dB",
+   "notes": "RMS -12.5 dBFS; the breath before the voice is trimmed, so it lands on the press"
+  },
+  {
+   "label": "C",
+   "file": "c_huss6_full_levelled.wav",
+   "source": "Not used. huss 6 (1.465-1.662 s), cut, fades, +2.4 dB gain",
+   "length": "0.197 s",
+   "peak": "-1.0 dBFS",
+   "lead_silence": "23 ms to -30 dB",
+   "notes": "RMS -13.8 dBFS"
+  }
+ ]
+}

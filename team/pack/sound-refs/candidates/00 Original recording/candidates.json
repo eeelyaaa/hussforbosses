@@ -1,0 +1,16 @@
+{
+ "event": "your file, untouched (byte-identical copy)",
+ "feel": "reference",
+ "question": "Nothing to pick. Measured: six bursts in two groups of three; the second group measures as a near copy of the first.",
+ "candidates": [
+  {
+   "label": "A",
+   "file": "huss-huss-huss-manager.mp3",
+   "source": "manager's recording, untouched",
+   "length": "1.933 s",
+   "loudness": "-13.2 LUFS",
+   "peak": "-2.9 dBFS",
+   "notes": "husses at 0.08-0.32, 0.32-0.50, 0.50-0.69, then 1.05-1.28, 1.28-1.47, 1.47-1.66 s; silence 0.69-1.05 s"
+  }
+ ]
+}
