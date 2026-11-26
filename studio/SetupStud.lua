@@ -7,7 +7,7 @@ if workspace:GetAttribute("HussForBosses") ~= true then error("PLACE-GUARD: not 
 --  MaterialService.StudProof_B    the three maps, normal map flipped (green inverted; Tokens.stud.worldNormalMapFlippedId)
 --  Workspace.StudProof            two identical test sets side by side, A on the left, B on the right: a floor (the slab), a wall of
 --                                 mixed brick sizes, a crate, three tint cubes (red, green, blue: does BasePart.Color tint the variant),
---                                 and one UI button with the tiled stud overlay, each labelled. Placed at hub X 100..280, Z 400..470 (south of
+--                                 and one UI button with the tiled stud overlay, each labelled. Placed at hub X 440..620, Z 400..470 (moved east of the six-zone strip, M2-10b) (south of
 --                                 the zone 1 ground, which ends at Z 380). View from the south (Z ~405), looking +Z; faces point -Z.
 -- Idempotent. Needs the DevSync sync first (reads Skins.brickbrawl.Tokens).
 --   require(game.ServerStorage.DevSync:Clone()).run("SetupStud.lua")
@@ -30,7 +30,8 @@ local function variant(name, normalId)
 	v.BaseMaterial = Enum.Material.SmoothPlastic
 	v.StudsPerTile = S.studsPerTile
 	if normalId then
-		v.ColorMap = url(S.worldColorMapId)
+		-- M2-04: the baked colour map (stud shading in the colour) once uploaded; the flat map left the stud only in the normal map, which fades with distance
+		v.ColorMap = url((S.worldColorBakedMapId or 0) ~= 0 and S.worldColorBakedMapId or S.worldColorMapId)
 		v.NormalMap = url(normalId)
 		v.RoughnessMap = url(S.worldRoughMapId)
 	end
@@ -117,8 +118,8 @@ local function set(ox, var, title)
 	local ts = Instance.new("UIStroke"); ts.Color = C.ink; ts.Thickness = 3; ts.Parent = t
 	return m
 end
-set(100, "StudProof_A", "A  normal map as made")
-set(200, "StudProof_B", "B  normal map flipped")
+set(440, "StudProof_A", "A  normal map as made")
+set(540, "StudProof_B", "B  normal map flipped")
 
 local ok = MaterialService:FindFirstChild("Stud") and MaterialService:FindFirstChild("StudProof_A") and MaterialService:FindFirstChild("StudProof_B")
 print(("SetupStud: %s variants Stud (%s), StudProof_A, StudProof_B; Workspace.StudProof has %d parts"):format(ok and "PASS" or "FAIL", PROMOTE and ("maps, " .. PROMOTE) or "plain stand-in", #Proof:GetDescendants()))

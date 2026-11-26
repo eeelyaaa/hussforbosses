@@ -2,6 +2,8 @@
 -- Ui/HussButton: the round Huss button, its timing ring and hit band, the impact star, the GOOD/PERFECT pop and the three pips.
 -- A view: plain values in, nothing read from the network or the clock (m1-contract.md section I).
 --   setMode("bag"|"fight"|"start"|"hidden")   setRing(progress|nil)   landed(grade)   missed()   pressed(bool)
+--   landed("perfect") floats PERFECT up above the button (M2-08, manager P3); landed("good") keeps the small GOOD pop;
+--   landed("untimed") is the small pop of a single untimed punch: a short star and a squash, no word (m2-contract B2).
 --   pips(n)   clearPips()   onTap(fn)
 -- Style guide 6, "The Huss button, timing ring and pips". The button is 120 design px, never under 96 px on screen
 -- (the diameter grows when the scale is small). All sizes come from Tokens.ui.
@@ -57,6 +59,10 @@ local function paintFace()
 	if S.pressed then
 		base = Kit.shade(base, U.pressedFill)
 	end
+	if S.spent then
+		base = Kit.shade(base, U.spentFill)
+	end
+	S.label.TextTransparency = S.spent and U.spentTextAlpha or 0
 	S.face.BackgroundColor3 = base
 	S.lip.BackgroundColor3 = Kit.shade(base, U.lipFactor)
 	S.face.Position = UDim2.new(0.5, 0, 0.5, S.pressed and U.pressedDropPx or 0)
@@ -102,7 +108,8 @@ local function layout()
 	end
 	local bandTop = math.floor(H * U.bandOuter / 2) + 9
 	S.pipFrame.Position = UDim2.new(0.5, 0, 0.5, -bandTop)
-	S.popLabel.Position = UDim2.new(0.5, 0, 0.5, -(bandTop + U.pipPx + 4))
+	S.floatBase = bandTop + U.pipPx + 4 -- where a floating grade word starts (just above the pips)
+	S.popLabel.Position = UDim2.new(0.5, 0, 0.5, -S.floatBase)
 	drawRing()
 	paintFace()
 end
@@ -325,6 +332,15 @@ function HussButton.setRing(progress: number?)
 	drawRing()
 end
 
+-- Dim the button while the ring is spent (after an untimed tap, until the next ring opens). Taps still fire.
+function HussButton.setSpent(on: boolean)
+	if not S then
+		return
+	end
+	S.spent = on == true
+	paintFace()
+end
+
 function HussButton.pressed(down: boolean)
 	if not S then
 		return
@@ -333,22 +349,60 @@ function HussButton.pressed(down: boolean)
 	paintFace()
 end
 
+-- PERFECT floats up above the button: pops in at 1.35x, rises U.perfectRisePx design px (drifting U.perfectDriftPx to the right, clear of the fight plate on a small phone) over U.perfectFloatS, and fades out over the
+-- last part. Each one is its own label, so a second Perfect inside the first one's float does not cut it short.
+local function floatPerfect()
+	local lbl = Kit.Text(S.holder, {
+		name = "PerfectFloat",
+		text = N.grades.perfect,
+		size = TY.title,
+		color = C.flashYellow,
+		sizeU = UDim2.fromOffset(220, 30),
+		anchor = Vector2.new(0.5, 1),
+		position = UDim2.new(0.5, 0, 0.5, -S.floatBase),
+	})
+	lbl.ZIndex = 10
+	local outline = lbl:FindFirstChild("Outline")
+	Kit.popScale(lbl, U.perfectPopScale, 0.08, 0.1)
+	local T = U.perfectFloatS
+	Kit.tween(lbl, { Position = UDim2.new(0.5, U.perfectDriftPx, 0.5, -(S.floatBase + U.perfectRisePx)) }, T, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+	task.delay(T * U.perfectFadeFrom, function()
+		if lbl.Parent then
+			local fade = T * (1 - U.perfectFadeFrom)
+			Kit.tween(lbl, { TextTransparency = 1 }, fade, Enum.EasingStyle.Linear)
+			if outline then
+				Kit.tween(outline, { Transparency = 1 }, fade, Enum.EasingStyle.Linear)
+			end
+		end
+	end)
+	task.delay(T + 0.05, function()
+		if lbl.Parent then
+			lbl:Destroy()
+		end
+	end)
+	return lbl
+end
+
 function HussButton.landed(grade: string)
 	if not S then
 		return
 	end
-	-- the button flashes flash-yellow for 0.08 s
-	S.flashGen += 1
-	local gen = S.flashGen
-	S.flash = true
-	paintFace()
-	task.delay(0.08, function()
-		if S and S.flashGen == gen then
-			S.flash = false
-			paintFace()
-		end
-	end)
-	-- the 8-point star pops behind the button (bigger on the third punch: the controller passes grade only, so the pips decide)
+	local untimed = grade == "untimed"
+	-- the button flashes flash-yellow for 0.08 s (an untimed single does not: it is the small one)
+	if not untimed then
+		S.flashGen += 1
+		local gen = S.flashGen
+		S.flash = true
+		paintFace()
+		task.delay(0.08, function()
+			if S and S.flashGen == gen then
+				S.flash = false
+				paintFace()
+			end
+		end)
+	end
+	-- the 8-point star pops behind the button (bigger on the third punch: the controller passes grade only, so the pips decide;
+	-- smaller still for an untimed single)
 	local big = S.pipN >= 3
 	local sc = S.starHolder:FindFirstChild("Pop")
 	if not sc then
@@ -357,16 +411,23 @@ function HussButton.landed(grade: string)
 		sc.Parent = S.starHolder
 	end
 	S.starHolder.Visible = true
-	sc.Scale = 0.5
-	Kit.tween(sc, { Scale = big and 1.5 or 1.15 }, 0.12)
-	-- GOOD / PERFECT
+	sc.Scale = untimed and 0.4 or 0.5
+	Kit.tween(sc, { Scale = untimed and U.untimedStarScale or (big and 1.5 or 1.15) }, untimed and 0.1 or 0.12)
 	S.popGen += 1
 	local pg = S.popGen
-	S.popLabel.Text = N.grades[grade] or string.upper(grade)
-	S.popLabel.TextColor3 = grade == "perfect" and C.flashYellow or C.white
-	S.popLabel.Visible = true
-	Kit.popScale(S.popLabel, 1.2, 0.08, 0.1)
-	task.delay(0.3, function()
+	if untimed then
+		Kit.popScale(S.face, U.untimedPopScale, 0.05, 0.08)
+		S.popLabel.Visible = false
+	elseif grade == "perfect" then
+		S.popLabel.Visible = false
+		floatPerfect()
+	else
+		S.popLabel.Text = N.grades[grade] or string.upper(grade)
+		S.popLabel.TextColor3 = C.white
+		S.popLabel.Visible = true
+		Kit.popScale(S.popLabel, 1.2, 0.08, 0.1)
+	end
+	task.delay(untimed and 0.2 or 0.3, function()
 		if S and S.popGen == pg then
 			S.starHolder.Visible = false
 		end

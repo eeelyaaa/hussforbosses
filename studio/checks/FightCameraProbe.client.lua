@@ -5,7 +5,8 @@ if workspace:GetAttribute("HussForBosses") ~= true then error("PLACE-GUARD: not 
 -- the moment it enters the ring while still walking. After the server has stood it at the fight spot it projects the
 -- boss box, the boss's head, the avatar and the HUD for the real camera and for Fight.frameBoss at 1280x720 and 874x402,
 -- prints "M126|" lines and sends them as Profile.TestReport (m126_<n>, then m126_done). Then Run, wait out the pad cooldown.
--- Workspace.HFB_M126Spots (check-only switch, read here only): "a" or "b", which set of start spots (one play call each).
+-- Workspace.HFB_M126Spots (check-only switch, read here only): "a" or "b", which set of start spots; the probe runs a set when the
+-- switch is set and again after it was cleared (M2-28: Gate.lua / GateRun.lua drive it, FightCamera/a and /b).
 local RunService = game:GetService("RunService")
 if not RunService:IsStudio() then return end
 local Players = game:GetService("Players")
@@ -41,7 +42,6 @@ local SETS = {
 		{ "zpos-near", 0, 2.0 },
 	},
 }
-local set = SETS[tostring(workspace:GetAttribute("HFB_M126Spots") or "a")] or SETS.a
 
 local function cornersOf(cf, size)
 	local t = {}
@@ -139,7 +139,9 @@ end
 
 local function flatDist(a, b) return Vector3.new(a.X - b.X, 0, a.Z - b.Z).Magnitude end
 
-task.spawn(function()
+-- M2-28: runs a start-spot set when the server driver (Gate FightCamera/<set>) sets HFB_M126Spots, once per set,
+-- so the probe can stay installed for a whole play session and one session can run both sets.
+local function runSet(set)
 	local char = lp.Character or lp.CharacterAdded:Wait()
 	local hum = char:WaitForChild("Humanoid")
 	local root = char:WaitForChild("HumanoidRootPart")
@@ -154,12 +156,21 @@ task.spawn(function()
 	end
 	task.wait(2)
 	local ring = pad:FindFirstChild("Ring")
+	-- the boss that patrols is the pad's client clone "Boss" (M2-12, what Controllers/Fight.bossOf returns); the tagged one under it is
+	-- the static template, so wait for the clone and use it
 	local boss
-	for _, d in pad:GetDescendants() do
-		if d:IsA("Model") and game:GetService("CollectionService"):HasTag(d, "HFB_Boss") then boss = d end
+	for _ = 1, 40 do
+		local b = pad:FindFirstChild("Boss")
+		if b and b:IsA("Model") then boss = b break end
+		task.wait(0.25)
+	end
+	if not boss then
+		for _, d in pad:GetDescendants() do
+			if d:IsA("Model") and game:GetService("CollectionService"):HasTag(d, "HFB_Boss") then boss = d end
+		end
 	end
 	local bb0, bs0 = boss:GetBoundingBox()
-	local centre = bb0.Position
+	local centre = bb0.Position -- updated per spot to the boss's live centre
 	local head = boss:FindFirstChild("Head", true)
 	report(("M126|setup|boss %s H=%s box %.1fx%.1fx%.1f centre (%.1f,%.1f) head offset (%.1f,%.1f) ring r=%s viewport %dx%d fov %d"):format(
 		boss.Name, tostring(boss:GetAttribute("H")), bs0.X, bs0.Y, bs0.Z, centre.X, centre.Z,
@@ -168,29 +179,53 @@ task.spawn(function()
 	local total, passed = 0, 0
 	for _, s in set do
 		local name, dx, dz, pressOnEntry = s[1], s[2], s[3], s[4]
-		local rc = ring.Position
-		local target = Vector3.new(rc.X + dx, root.Position.Y, rc.Z + dz)
+		-- M2-07 (patrol-aware): the boss walks up to 14 studs from the ring centre and the server tests Fight.Start against where it
+		-- is now, so every start spot is an offset from the boss's LIVE centre, taken the moment it is used (as Punch2 phase c's
+		-- nearBoss does), never from the ring centre. Spots stay within 5.8 studs of the boss, inside any ring radius.
+		local function live() return (boss:GetBoundingBox()).Position end
+		local function spotAt(bc) return Vector3.new(bc.X + dx, root.Position.Y, bc.Z + dz) end
 		local dir = Vector3.new(dx, 0, dz).Unit
-		local from = Vector3.new(rc.X, root.Position.Y, rc.Z) + dir * 10
-		char:PivotTo(CFrame.lookAt(from, Vector3.new(centre.X, from.Y, centre.Z)))
-		root.AssemblyLinearVelocity = Vector3.zero
-		task.wait(0.4)
 		local pressAt
-		if pressOnEntry then
-			hum:MoveTo(Vector3.new(centre.X, root.Position.Y, centre.Z))
+		-- a real player whose press is refused 'ring' (the server saw the position or the boss a little differently while the boss walks)
+		-- presses again: up to 3 presses, each placed from the boss's live centre
+		for attempt = 1, 3 do
+			if attempt > 1 then task.wait(0.3) end
+			local bc = live()
+			centre = bc
+			if pressOnEntry then
+				-- start 9 studs out on that side and walk at the boss, re-aiming at its live centre; press the moment inStartRing is true
+				local from = Vector3.new(bc.X, root.Position.Y, bc.Z) + dir * 9
+				char:PivotTo(CFrame.lookAt(from, Vector3.new(bc.X, from.Y, bc.Z)))
+				root.AssemblyLinearVelocity = Vector3.zero
+				task.wait(0.4)
+				local t0 = os.clock()
+				while not Fight.inStartRing() and os.clock() - t0 < 4 do
+					local c = live()
+					hum:MoveTo(Vector3.new(c.X, root.Position.Y, c.Z))
+					RunService.Heartbeat:Wait()
+				end
+				centre = live()
+				pressAt = root.Position
+				Fight.requestStart()
+			else
+				-- appear at the spot (an offset from the boss's live centre), settle so the server has the position, re-place once
+				-- (the boss moved about 1.6 studs meanwhile), press
+				char:PivotTo(CFrame.lookAt(spotAt(bc), Vector3.new(bc.X, root.Position.Y, bc.Z)))
+				root.AssemblyLinearVelocity = Vector3.zero
+				task.wait(0.35)
+				bc = live()
+				char:PivotTo(CFrame.lookAt(spotAt(bc), Vector3.new(bc.X, root.Position.Y, bc.Z)))
+				root.AssemblyLinearVelocity = Vector3.zero
+				task.wait(0.15)
+				centre = live()
+				pressAt = root.Position
+				Fight.requestStart() -- the Huss press
+			end
 			local t0 = os.clock()
-			while not Fight.inStartRing() and os.clock() - t0 < 3 do RunService.Heartbeat:Wait() end
-			pressAt = root.Position
-			Fight.requestStart()
-		else
-			hum:MoveTo(target)
-			local t0 = os.clock()
-			while flatDist(root.Position, target) > 0.6 and os.clock() - t0 < 2.5 do RunService.Heartbeat:Wait() end
-			pressAt = root.Position
-			Fight.requestStart() -- the Huss press, while the avatar may still be moving
+			while not Fight.active() and os.clock() - t0 < 2.5 do task.wait(0.05) end
+			if Fight.active() then break end
+			report(("M126|%s|note attempt %d: no fight yet (inStartRing %s)"):format(name, attempt, tostring(Fight.inStartRing())))
 		end
-		local t0 = os.clock()
-		while not Fight.active() and os.clock() - t0 < 3 do task.wait(0.05) end
 		if not Fight.active() then
 			local why = "no reply"
 			for i = #Fight.log, 1, -1 do
@@ -243,4 +278,19 @@ task.spawn(function()
 	end
 	report(("M126|summary|%d pass, %d fail"):format(passed, total - passed))
 	Net.get("Profile", "TestReport"):FireServer({ name = "m126_done", json = "{}" })
+end
+
+task.spawn(function()
+	local last = nil
+	while true do
+		local k = workspace:GetAttribute("HFB_M126Spots")
+		if k == nil then
+			last = nil
+		elseif k ~= last and SETS[tostring(k)] then
+			last = k
+			n = 0
+			runSet(SETS[tostring(k)])
+		end
+		task.wait(0.25)
+	end
 end)

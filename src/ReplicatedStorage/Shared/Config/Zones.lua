@@ -1,12 +1,41 @@
 --!strict
 -- Config.Zones: pads, boss Power and base income by creature id (brief system 4 and 5; m1-contract.md E).
--- The whole 36-creature table is the brief's (system 5); M1 uses z1_t1 only.
+-- The whole 36-creature table is the brief's (system 5). Owned by M2-10 (m2-contract.md A).
 local Zones = {}
 
--- Pads by PadId (the builder's Workspace.Zones.Z<n>.Pads.<Kind> attribute PadId). M1: zone 1's fixed pad only.
-Zones.PADS = {
-	z1_fixed = { creatureId = "z1_t1", zone = 1, kind = "fixed" },
+-- Pads by PadId (brief system 5: 4 per zone, 24 in all). The world's pad Models carry the attribute PadId and the tag
+-- HFB_BossPad (Workspace.Zones.Z<n>.Pads.<Fixed|Roll1|Roll2|Roll3>). The fixed pad is always the zone's Common; a
+-- rolling pad's creatureId is the server's current roll (Systems/Zones). M2-10: all six zones.
+Zones.PADS = {} :: { [string]: { creatureId: string?, zone: number, kind: string, slot: number } }
+for zone = 1, 6 do
+	Zones.PADS[("z%d_fixed"):format(zone)] = { creatureId = ("z%d_t1"):format(zone), zone = zone, kind = "fixed", slot = 0 }
+	for k = 1, 3 do
+		Zones.PADS[("z%d_roll%d"):format(zone, k)] = { zone = zone, kind = "roll", slot = k }
+	end
+end
+
+-- Rolling pads (brief system 5): every ROLL_S seconds each pad rolls a new creature from its zone. Hook PadsFast
+-- replaces ROLL_S. The three pads of a zone are staggered by ROLL_S / 3 (TEAM CALL M2-10-2) so a zone always has a
+-- countdown close to its end.
+Zones.ROLL_S = 45
+Zones.ROLL_STAGGER = true
+-- Roll odds by zone, percent for tiers 1..6 (Common .. Mythic), each row 100 (brief system 5 table).
+Zones.ROLL_ODDS = {
+	{ 50, 28, 14, 6, 1.7, 0.3 },
+	{ 46, 28, 15, 8, 2.5, 0.5 },
+	{ 42, 28, 16, 10, 3.3, 0.7 },
+	{ 38, 27, 18, 12, 4, 1 },
+	{ 34, 26, 20, 13, 5.5, 1.5 },
+	{ 30, 25, 21, 15, 7, 2 },
 }
+
+-- Patrol (the manager's P5; m2-contract.md E; Shared/Patrol). Stand-ins until the M3 world gives each boss its region
+-- (PROVISIONAL manager-todo Q3: a short walk, 14 studs each way). slack = extra studs on the Fight.Start ring test.
+Zones.PATROL = { halfLen = 14, speed = 4, pauseS = 1.0, slack = 1.5 }
+-- The lane's centre line (structure, the test strip's: X 206, running +Z). A pad without a PatrolAnchor part walks
+-- along it, facing it at the turns (Shared/Patrol.anchor).
+Zones.LANE = { origin = Vector3.new(206, 0, 0), axis = Vector3.new(0, 0, 1) }
+
 
 -- Boss Power by creature id (brief system 5 table).
 Zones.POWER = {

@@ -1,180 +1,214 @@
 if workspace:GetAttribute("HussForBosses") ~= true then error("PLACE-GUARD: not the Huss for Bosses place; refusing to run", 0) end
--- M1-12 SetupBosses: builds Chomp Frog (Boss_z1_t1) on the zone 1 fixed pad, to m1-contract.md section G.
---   * Source meshes: the first Model/Folder under ServerStorage.BossScratch that holds BaseParts named exactly Body, Head, Sig,
---     FistL, FistR (the importer's output for the atlas route; the main session imports there, MS-A3). With none, part-built
---     stand-ins of the five groups are made in ServerStorage.BossScratch.z1_t1_standin (attribute StandIn) and used, so the
---     joints, pivots and placement can be tested before the meshes exist. A real import always wins over the stand-in.
---   * Pivots are read at run time from studio/data/z1_t1.groups.lua (guard line + the JSON in a block comment, a copy of assets-src/models/z1_t1.groups.json; refresh it
---     with `python tools/sync_group_data.py` after the modeler changes a pivot). Nothing about a pivot is written in this script.
---     The JSON's "pivot_studs_roblox_offset_from_model_pivot" is measured from the model pivot = the middle of the feet.
---   * Where the feet are: horizontally the Body's own pivot, vertically the lowest point of the five parts. (Assumption to check
---     at M1-17: the importer keeps Blender's origin as the Body's pivot.) The script prints INFO lines for it.
---   * Joints (M1-09's rule): one Motor6D per non-root group under Body, Part0 = Body, Part1 = group, C0 = the pivot in Body's frame,
---     C1 = the pivot in the group's frame, both with identity rotation, so Transform = identity is the rest pose and nothing else
---     moves the model. Body.PivotOffset = the middle of the feet. Body anchored, the rest welded by the joints, CanCollide off, Massless.
---   * Route: atlas (one mesh per group). The per-role route is not built until B4 picks it (its meshes are named Body_g1 etc).
--- Idempotent: replaces Fixed's boss each run. Needs BuildSlice.lua first.
+-- SetupBosses (M1-12 frog, extended M2-25): builds every boss that has imported meshes into Boss_<id> on its zone's Fixed pad.
+--   z1_t1 Chomp Frog (squat stomper: Body Head Sig FistL FistR), z2_t2 Snap Scorpion and z5_t5 Ember Drake (tailed striker: Body Head FistL FistR
+--   TailA TailB), z3_t3 Bit Shark (rearing swayer: Body Upper Head FistL FistR), z4_t4 Frost Byte and z6_t6 Star Golem (biped bruiser: Body Head FistL
+--   FistR, + Sig on the golem). Each group list is checked against the keys of studio/data/<id>.groups.lua (a copy of assets-src/models/<id>.groups.json;
+--   refresh with `python tools/sync_group_data.py`).
+--   * Source: BossScratch.<id>_atlas (the main session's import). Only z1_t1 falls back to part-built stand-ins; an M2 boss with no import FAILs.
+--   * Pivots come from the groups data at run time; none is written here. Model pivot = the middle of the feet = the Body pivot horizontally, the lowest
+--     point of all groups vertically.
+--   * Joints (M1-09): one flat Motor6D per non-root group under Body (Part0 Body, C0 = pivot in Body frame, C1 = pivot in the group frame, identity
+--     rotation, Transform identity = rest). Flat is what Shared/Moves/_geo.lua and _lib `expand` expect: TailB rides TailA and Head/fists ride Upper by
+--     computing, not by nesting Motor6Ds. Body anchored, the rest unanchored, massless, no collision; Body.PivotOffset = the feet.
+--   * Textured MeshParts: Color white, SmoothPlastic, Reflectance 0 (M1-17); TextureID = Models.lua creatures.<id>.textureId (the shared owned atlas),
+--     replacing the importer's own copy.
+-- Re-runnable: replaces the boss on each pad. Needs BuildSlice.lua and BuildStrip.lua first.
 --   require(game.ServerStorage.DevSync:Clone()).run("SetupBosses.lua")
 local HttpService = game:GetService("HttpService")
 local ServerStorage = game:GetService("ServerStorage")
 local CollectionService = game:GetService("CollectionService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local ID, MODEL_NAME, BODY_TYPE, H = "z1_t1", "Boss_z1_t1", 2, 4
-local GROUPS = { "Body", "Head", "Sig", "FistL", "FistR" } -- contract G; Body is the root
+local BOSSES = { -- id, zone, body type, tier height H, groups (Body is the root)
+	{ id = "z1_t1", zone = 1, bt = 2, H = 4,    groups = { "Body", "Head", "Sig", "FistL", "FistR" } },
+	{ id = "z2_t2", zone = 2, bt = 3, H = 5.3,  groups = { "Body", "Head", "FistL", "FistR", "TailA", "TailB" } },
+	{ id = "z3_t3", zone = 3, bt = 5, H = 6.8,  groups = { "Body", "Upper", "Head", "FistL", "FistR" } },
+	{ id = "z4_t4", zone = 4, bt = 1, H = 8.3,  groups = { "Body", "Head", "FistL", "FistR" } },
+	{ id = "z5_t5", zone = 5, bt = 3, H = 10.9, groups = { "Body", "Head", "FistL", "FistR", "TailA", "TailB" } },
+	{ id = "z6_t6", zone = 6, bt = 1, H = 14,   groups = { "Body", "Head", "FistL", "FistR", "Sig" } },
+}
 local fails = 0
+local LOG = {} -- also left in ServerStorage attribute SetupBossesLog (the console buffer truncates a run this long); read it, then clear it
+local function say(l) print(l); table.insert(LOG, l) end
 local function check(label, ok, extra)
-	print(("SetupBosses: %s %s%s"):format(ok and "PASS" or "FAIL", label, extra and (" (" .. extra .. ")") or ""))
+	say(("SetupBosses: %s %s%s"):format(ok and "PASS" or "FAIL", label, extra and (" (" .. extra .. ")") or ""))
 	if not ok then fails += 1 end
 end
 
-local data = HttpService:JSONDecode(HttpService:GetAsync("http://127.0.0.1:34874/studio/data/" .. ID .. ".groups.lua", true):match("%-%-%[==%[(.*)%]==%]"))
-local pivots = {}
-for _, g in ipairs(GROUPS) do
-	local d = data.groups[g]
-	pivots[g] = d and Vector3.new(table.unpack(d.pivot_studs_roblox_offset_from_model_pivot)) or nil
-end
+local skinTex = {}
 do
-	local n, same = 0, true
-	for k in pairs(data.groups) do n += 1; if not pivots[k] then same = false end end
-	check("groups.json groups are exactly Body, Head, Sig, FistL, FistR", same and n == #GROUPS)
+	local mod = ReplicatedStorage:FindFirstChild("Skins") and ReplicatedStorage.Skins:FindFirstChild("brickbrawl") and ReplicatedStorage.Skins.brickbrawl:FindFirstChild("Models")
+	local ok, M = pcall(function() return require(mod) end)
+	if ok and type(M) == "table" then
+		for id, c in pairs(M.creatures) do skinTex[id] = c.textureId end
+	else
+		say("SetupBosses: INFO Skins/brickbrawl/Models not loadable (sync src/ first); using the importer's textures")
+	end
 end
 
-local Fixed = workspace.Zones.Z1.Pads.Fixed
-local anchor = Fixed:FindFirstChild("BossAnchor")
-check("Fixed.BossAnchor exists (run BuildSlice.lua first)", anchor ~= nil)
-if not anchor then error("SetupBosses: no BossAnchor", 0) end
-
--- ---------------------------------------------------------------- source
 local scratch = ServerStorage:FindFirstChild("BossScratch")
-if not scratch then
-	scratch = Instance.new("Folder"); scratch.Name = "BossScratch"; scratch.Parent = ServerStorage
-end
-local function hasAll(c)
+if not scratch then scratch = Instance.new("Folder"); scratch.Name = "BossScratch"; scratch.Parent = ServerStorage end
+
+local function setup(B)
+	local ID, MODEL_NAME, GROUPS = B.id, "Boss_" .. B.id, B.groups
+	local tag = ID .. " "
+	local data = HttpService:JSONDecode(HttpService:GetAsync("http://127.0.0.1:34874/studio/data/" .. ID .. ".groups.lua", true):match("%-%-%[==%[(.*)%]==%]"))
+	local pivots = {}
 	for _, g in ipairs(GROUPS) do
-		local p = c:FindFirstChild(g)
-		if not (p and p:IsA("BasePart")) then return false end
+		local d = data.groups[g]
+		pivots[g] = d and Vector3.new(table.unpack(d.pivot_studs_roblox_offset_from_model_pivot)) or nil
 	end
-	return true
-end
-local function findSource(preferReal)
-	for _, d in ipairs(scratch:GetDescendants()) do
-		if (d:IsA("Model") or d:IsA("Folder")) and hasAll(d) and (d:GetAttribute("StandIn") == true) ~= preferReal then return d end
+	do
+		local n, same = 0, true
+		for k in pairs(data.groups) do n += 1; if not pivots[k] then same = false end end
+		check(tag .. "groups.json groups are exactly " .. table.concat(GROUPS, ", "), same and n == #GROUPS)
 	end
-end
-local src = findSource(true)
-if src then
-	local old = scratch:FindFirstChild(ID .. "_standin")
+
+	local padsF = workspace.Zones:FindFirstChild("Z" .. B.zone) and workspace.Zones["Z" .. B.zone].Pads
+	local Fixed = padsF and padsF:FindFirstChild("Fixed")
+	local anchor = Fixed and Fixed:FindFirstChild("BossAnchor")
+	check(tag .. "Z" .. B.zone .. " Fixed.BossAnchor exists (BuildSlice/BuildStrip first)", anchor ~= nil)
+	if not anchor then return end
+
+	local function hasAll(c)
+		for _, g in ipairs(GROUPS) do
+			local p = c:FindFirstChild(g)
+			if not (p and p:IsA("BasePart")) then return false end
+		end
+		return true
+	end
+	local src, standIn
+	for _, d in ipairs(scratch:GetChildren()) do
+		if (d:IsA("Model") or d:IsA("Folder")) and hasAll(d) and d:GetAttribute("StandIn") ~= true and (d.Name:sub(1, #ID) == ID) then src = d break end
+	end
+	if not src and ID == "z1_t1" then
+		for _, d in ipairs(scratch:GetChildren()) do
+			if (d:IsA("Model") or d:IsA("Folder")) and hasAll(d) and d:GetAttribute("StandIn") ~= true and d.Name ~= "gloves_atlas" and not d.Name:match("^z[2-6]_") then src = d break end
+		end
+	end
+	if not src and ID == "z1_t1" then
+		local old = scratch:FindFirstChild(ID .. "_standin")
+		if old then old:Destroy() end
+		local m = Instance.new("Model"); m.Name = ID .. "_standin"; m:SetAttribute("StandIn", true)
+		local function box(name, size, centre, col)
+			local p = Instance.new("Part"); p.Name = name; p.Size = size; p.CFrame = CFrame.new(centre)
+			p.Color = col; p.Material = Enum.Material.SmoothPlastic; p.Anchored = true; p.Parent = m
+			return p
+		end
+		local green, dark = Color3.fromRGB(95, 160, 60), Color3.fromRGB(70, 125, 45)
+		local body = box("Body", Vector3.new(6, 2.4, 3.2), Vector3.new(10, 6.2, 10), green)
+		body.PivotOffset = CFrame.new(0, -1.2, 0)
+		local f = Vector3.new(10, 5, 10)
+		box("Head", Vector3.new(6, 1.6, 2.6), f + Vector3.new(0, 2.4, 0), green)
+		box("Sig", Vector3.new(5, 0.8, 2.2), f + Vector3.new(0, 1.8, -0.6), Color3.fromRGB(225, 110, 150))
+		box("FistL", Vector3.new(1.4, 1.4, 1.4), f + Vector3.new(-2.2, 1.7, -0.4), dark)
+		box("FistR", Vector3.new(1.4, 1.4, 1.4), f + Vector3.new(2.2, 1.7, -0.4), dark)
+		m.Parent = scratch
+		src, standIn = m, true
+	end
+	if not src then say("SetupBosses: INFO " .. ID .. " has no imported meshes in BossScratch; skipped"); fails += 1; check(tag .. "imported meshes present", false); return end
+	say("SetupBosses: INFO " .. tag .. "source " .. src:GetFullName() .. (standIn and " (STAND-IN parts)" or " (imported meshes)"))
+	check(tag .. "source has the groups as BaseParts", hasAll(src))
+
+	local old = Fixed:FindFirstChild(MODEL_NAME)
 	if old then old:Destroy() end
-else
-	local old = scratch:FindFirstChild(ID .. "_standin")
-	if old then old:Destroy() end
-	-- stand-ins: boxes where the groups are (sizes from the M1-09 box rig); origins are NOT at the pivots, to prove the maths
-	local m = Instance.new("Model"); m.Name = ID .. "_standin"; m:SetAttribute("StandIn", true)
-	local function box(name, size, centre, col)
-		local p = Instance.new("Part"); p.Name = name; p.Size = size; p.CFrame = CFrame.new(centre)
-		p.Color = col; p.Material = Enum.Material.SmoothPlastic; p.Anchored = true; p.Parent = m
-		return p
+	local oldB = Fixed:FindFirstChild("Boss")
+	if oldB then oldB:Destroy() end
+
+	local srcBody = src.Body
+	local lowY = math.huge
+	for _, g in ipairs(GROUPS) do
+		local p = src[g]
+		local cf, sz = p.CFrame, p.Size
+		for sx = -1, 1, 2 do for sy = -1, 1, 2 do for sz2 = -1, 1, 2 do
+			lowY = math.min(lowY, cf:PointToWorldSpace(Vector3.new(sx * sz.X / 2, sy * sz.Y / 2, sz2 * sz.Z / 2)).Y)
+		end end end
 	end
-	local green, dark = Color3.fromRGB(95, 160, 60), Color3.fromRGB(70, 125, 45)
-	local body = box("Body", Vector3.new(6, 2.4, 3.2), Vector3.new(10, 1.2 + 5, 10), green) -- origin at its centre; placed away from the origin on purpose
-	body.PivotOffset = CFrame.new(0, -1.2, 0) -- Body pivot at the middle of the feet
-	local feet = Vector3.new(10, 5, 10)
-	box("Head", Vector3.new(6, 1.6, 2.6), feet + Vector3.new(0, 2.4, 0), green)
-	box("Sig", Vector3.new(5, 0.8, 2.2), feet + Vector3.new(0, 1.8, -0.6), Color3.fromRGB(225, 110, 150))
-	box("FistL", Vector3.new(1.4, 1.4, 1.4), feet + Vector3.new(-2.2, 1.7, -0.4), dark)
-	box("FistR", Vector3.new(1.4, 1.4, 1.4), feet + Vector3.new(2.2, 1.7, -0.4), dark)
-	m.Parent = scratch
-	src = m
-end
-local isStandIn = src:GetAttribute("StandIn") == true
-print("SetupBosses: INFO source " .. src:GetFullName() .. (isStandIn and " (STAND-IN parts, no real meshes imported yet)" or " (imported meshes)"))
-check("source has the five groups as BaseParts, each its own part", hasAll(src))
+	local bp = srcBody:GetPivot().Position
+	local feet = Vector3.new(bp.X, lowY, bp.Z)
+	say(("SetupBosses: INFO %sfeet at (%.3f, %.3f, %.3f); Body pivot y %.3f"):format(tag, feet.X, feet.Y, feet.Z, bp.Y))
+	local F = CFrame.new(feet) * srcBody.CFrame.Rotation
 
--- ---------------------------------------------------------------- build
-local old = Fixed:FindFirstChild(MODEL_NAME)
-if old then old:Destroy() end
-local oldB = Fixed:FindFirstChild("Boss")
-if oldB then oldB:Destroy() end
-
-local srcBody = src.Body
-local lowY = math.huge
-for _, g in ipairs(GROUPS) do
-	local p = src[g]
-	local cf, sz = p.CFrame, p.Size
-	for sx = -1, 1, 2 do for sy = -1, 1, 2 do for sz2 = -1, 1, 2 do
-		lowY = math.min(lowY, cf:PointToWorldSpace(Vector3.new(sx * sz.X / 2, sy * sz.Y / 2, sz2 * sz.Z / 2)).Y)
-	end end end
-end
-local bp = srcBody:GetPivot().Position
-local feet = Vector3.new(bp.X, lowY, bp.Z)
-print(("SetupBosses: INFO feet at (%.3f, %.3f, %.3f); Body pivot y %.3f (assumption: the Body's pivot is the feet, so these agree)"):format(feet.X, feet.Y, feet.Z, bp.Y, 0))
-local F = CFrame.new(feet) * srcBody.CFrame.Rotation -- model frame: origin at the feet, rotated like the Body
-
-local model = Instance.new("Model")
-model.Name = MODEL_NAME
-local parts = {}
-for _, g in ipairs(GROUPS) do
-	local p = src[g]:Clone()
-	p.CFrame = F:ToObjectSpace(src[g].CFrame) -- rebuilt in the model frame (origin = feet)
-	p.PivotOffset = CFrame.identity
-	p.Anchored = false
-	p.CanCollide = false
-	p.CanTouch = false
-	p.Massless = true
-	if p:IsA("MeshPart") and p.TextureID ~= "" then
-		-- M1-17: MeshPart.Color multiplies the atlas texture; the importer leaves the default grey (163,162,165), which dulled the cream
-		-- to a grey-green. The atlas carries every colour, so the tint must be white. Matte, no reflectance.
-		p.Color = Color3.new(1, 1, 1)
-		p.Material = Enum.Material.SmoothPlastic
-		p.Reflectance = 0
+	local model = Instance.new("Model")
+	model.Name = MODEL_NAME
+	local parts = {}
+	for _, g in ipairs(GROUPS) do
+		local p = src[g]:Clone()
+		p.CFrame = F:ToObjectSpace(src[g].CFrame)
+		p.PivotOffset = CFrame.identity
+		p.Anchored = false; p.CanCollide = false; p.CanTouch = false; p.Massless = true
+		if p:IsA("MeshPart") and p.TextureID ~= "" then
+			if skinTex[ID] then p.TextureID = "rbxassetid://" .. tostring(skinTex[ID]) end
+			p.Color = Color3.new(1, 1, 1)
+			p.Material = Enum.Material.SmoothPlastic
+			p.Reflectance = 0
+		end
+		p.Parent = model
+		parts[g] = p
 	end
-	p.Parent = model
-	parts[g] = p
-end
-local body = parts.Body
-body.Anchored = true
-body.PivotOffset = CFrame.new(body.CFrame:PointToObjectSpace(Vector3.zero)) -- the middle of the feet
-model.PrimaryPart = body
+	local body = parts.Body
+	body.Anchored = true
+	body.PivotOffset = CFrame.new(body.CFrame:PointToObjectSpace(Vector3.zero))
+	model.PrimaryPart = body
 
-local rotOk = true
-for _, g in ipairs(GROUPS) do
-	if g ~= "Body" then
-		local pw = pivots[g]
-		local m = Instance.new("Motor6D")
-		m.Name = g
-		m.Part0 = body
-		m.Part1 = parts[g]
-		m.C0 = body.CFrame:ToObjectSpace(CFrame.new(pw))
-		m.C1 = parts[g].CFrame:ToObjectSpace(CFrame.new(pw))
-		m.Parent = body
-		if not (m.C0.Rotation:FuzzyEq(CFrame.identity, 1e-4) and m.C1.Rotation:FuzzyEq(CFrame.identity, 1e-4)) then rotOk = false end
-		local rest = body.CFrame * m.C0 * m.C1:Inverse()
-		check("rest pose of " .. g .. " (Body * C0 * C1^-1 = its CFrame)", rest:FuzzyEq(parts[g].CFrame, 1e-4))
+	local rotOk = true
+	for _, g in ipairs(GROUPS) do
+		if g ~= "Body" then
+			local pw = pivots[g]
+			local m = Instance.new("Motor6D")
+			m.Name = g; m.Part0 = body; m.Part1 = parts[g]
+			m.C0 = body.CFrame:ToObjectSpace(CFrame.new(pw))
+			m.C1 = parts[g].CFrame:ToObjectSpace(CFrame.new(pw))
+			m.Parent = body
+			if not (m.C0.Rotation:FuzzyEq(CFrame.identity, 1e-4) and m.C1.Rotation:FuzzyEq(CFrame.identity, 1e-4)) then rotOk = false end
+			check(tag .. "rest pose of " .. g, (body.CFrame * m.C0 * m.C1:Inverse()):FuzzyEq(parts[g].CFrame, 1e-4))
+		end
+	end
+	check(tag .. "joints have identity rotation in C0 and C1 (M1-09)", rotOk)
+
+	model:SetAttribute("CreatureId", ID)
+	model:SetAttribute("BodyType", B.bt)
+	model:SetAttribute("H", B.H)
+	CollectionService:AddTag(model, "HFB_Boss")
+	-- M2-34: with StreamingEnabled the boss must arrive whole (BossMoves needs every group; BossVisuals clones these as the templates for every
+	-- boss in the game, so they must be on the client wherever the player stands). Six small models: Persistent (TEAM CALL M2-34-1).
+	model.ModelStreamingMode = Enum.ModelStreamingMode.Persistent
+	model.Parent = Fixed
+	model:PivotTo(CFrame.new(anchor.Position))
+
+	local names, ok = {}, true
+	for _, c in ipairs(model:GetChildren()) do if c:IsA("BasePart") then names[c.Name] = true end end
+	for _, g in ipairs(GROUPS) do if not names[g] then ok = false end end
+	check(tag .. "model " .. MODEL_NAME .. " has exactly the groups " .. table.concat(GROUPS, ", "), ok and #model:GetChildren() == #GROUPS)
+	local unanch = true
+	for g, p in pairs(parts) do if g ~= "Body" and (p.Anchored or not p.Massless or p.CanCollide) then unanch = false end end
+	check(tag .. "PrimaryPart = Body, anchored; the others unanchored, massless, no collision", model.PrimaryPart == body and body.Anchored and not body.CanCollide and unanch)
+	local joints = 0
+	for _, g in ipairs(GROUPS) do if g ~= "Body" and body:FindFirstChild(g) and body[g]:IsA("Motor6D") then joints += 1 end end
+	check(tag .. (#GROUPS - 1) .. " Motor6Ds under Body named after their group", joints == #GROUPS - 1 and #body:GetChildren() == #GROUPS - 1)
+	check(tag .. "model pivot is at BossAnchor", (model:GetPivot().Position - anchor.Position).Magnitude < 1e-3)
+	check(tag .. "attributes CreatureId/BodyType/H and tag HFB_Boss", model:GetAttribute("CreatureId") == ID and model:GetAttribute("BodyType") == B.bt and model:GetAttribute("H") == B.H and CollectionService:HasTag(model, "HFB_Boss"))
+	check(tag .. "ModelStreamingMode is Persistent (M2-34)", model.ModelStreamingMode == Enum.ModelStreamingMode.Persistent)
+	local _, bsz = model:GetBoundingBox()
+	local lowest = math.huge
+	for _, p in pairs(parts) do
+		local cf, sz = p.CFrame, p.Size
+		for sx = -1, 1, 2 do for sy = -1, 1, 2 do for sz2 = -1, 1, 2 do
+			lowest = math.min(lowest, cf:PointToWorldSpace(Vector3.new(sx * sz.X / 2, sy * sz.Y / 2, sz2 * sz.Z / 2)).Y)
+		end end end
+	end
+	say(("SetupBosses: INFO %sbounding box %.2f x %.2f x %.2f studs (H %s); lowest corner %.3f studs from the pad top; anchor y %.2f"):format(tag, bsz.X, bsz.Y, bsz.Z, tostring(B.H), lowest - anchor.Position.Y, anchor.Position.Y))
+	check(tag .. "the feet stand on the pad (lowest corner within 0.05 studs of the BossAnchor)", math.abs(lowest - anchor.Position.Y) < 0.05)
+	local tris = 0
+	for _, g in ipairs(GROUPS) do
+		local p = parts[g]
+		if p:IsA("MeshPart") then say(("SetupBosses: MESHID %s%s %s"):format(tag, g, p.MeshId)) end
 	end
 end
-check("joints have identity rotation in C0 and C1 (M1-09)", rotOk)
 
-model:SetAttribute("CreatureId", ID)
-model:SetAttribute("BodyType", BODY_TYPE)
-model:SetAttribute("H", H)
-CollectionService:AddTag(model, "HFB_Boss")
-model.Parent = Fixed
-model:PivotTo(CFrame.new(anchor.Position)) -- the Body pivot (middle of the feet) stands on the BossAnchor
-
--- ---------------------------------------------------------------- checks
-local names, ok = {}, true
-for _, c in ipairs(model:GetChildren()) do if c:IsA("BasePart") then names[c.Name] = true end end
-for _, g in ipairs(GROUPS) do if not names[g] then ok = false end end
-check("model " .. MODEL_NAME .. " has exactly the groups Body, Head, Sig, FistL, FistR", ok and #model:GetChildren() == #GROUPS)
-check("PrimaryPart = Body, Body anchored, the other four unanchored, massless, no collision", model.PrimaryPart == body and body.Anchored and not parts.Head.Anchored and not parts.Sig.Anchored and not parts.FistL.Anchored and not parts.FistR.Anchored and parts.Head.Massless and not parts.Head.CanCollide and not body.CanCollide)
-check("4 Motor6Ds under Body named after their group", #body:GetChildren() == 4 and body:FindFirstChild("Head") and body.Head:IsA("Motor6D") and body:FindFirstChild("Sig") and body:FindFirstChild("FistL") and body:FindFirstChild("FistR"))
-check("model pivot (Body pivot) is at BossAnchor", (model:GetPivot().Position - anchor.Position).Magnitude < 1e-3)
-check("attributes CreatureId/BodyType/H and tag HFB_Boss", model:GetAttribute("CreatureId") == ID and model:GetAttribute("BodyType") == BODY_TYPE and model:GetAttribute("H") == H and CollectionService:HasTag(model, "HFB_Boss"))
-local _, bsz = model:GetBoundingBox()
-print(("SetupBosses: INFO bounding box %.2f x %.2f x %.2f studs (expected 6.8 x 4.0 x 3.0 per groups.json; H = %d)"):format(bsz.X, bsz.Y, bsz.Z, H))
-local tris = 0
-for _, g in ipairs(GROUPS) do
-	local p = parts[g]
-	if p:IsA("MeshPart") then print(("SetupBosses: MESHID %s %s (wire into Skins/brickbrawl/Models.lua creatures.%s.groups)"):format(g, p.MeshId, ID)) end
+for _, B in ipairs(BOSSES) do
+	local ok, err = pcall(setup, B)
+	if not ok then check(B.id .. " setup ran without error", false, tostring(err)) end
 end
-print(("SetupBosses: %s, %d failed (%s)"):format(fails == 0 and "PASS" or "FAIL", fails, isStandIn and "on stand-in parts" or "on imported meshes"))
+say(("SetupBosses: %s, %d failed"):format(fails == 0 and "PASS" or "FAIL", fails))
+ServerStorage:SetAttribute("SetupBossesLog", table.concat(LOG, string.char(10)))

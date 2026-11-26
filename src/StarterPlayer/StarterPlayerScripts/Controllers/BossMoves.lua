@@ -126,6 +126,7 @@ local function initState(model)
 		base = nil, overlay = nil, flashEnd = nil,
 	}
 	local restPivotInv = st.restPivot:Inverse()
+	st.bodyCentre = (restPivotInv * body.CFrame).Position -- the Body part's centre from the pivot (the feet)
 	for _, name in ipairs(GROUPS) do
 		local part = model:FindFirstChild(name, true)
 		if part and part:IsA("BasePart") then
@@ -144,7 +145,10 @@ local function initState(model)
 				else
 					g.cOff = g.joint.C1:Inverse().Position
 					-- the group's pivot, where it rests, from the Body's pivot (for a Body scale)
-					g.pivotFromBody = (restPivotInv * (body.CFrame * g.joint.C0)).Position
+					-- M2-22 fix: the joint hangs off the Body PART, whose centre already moves by (scale-1) x its own offset from the feet when the
+					-- Body is scaled, so the extra shift a pivot needs is (scale-1) x (its offset from the feet MINUS the Body centre's). Without the
+					-- subtraction a squash dragged every group down by (1-sy) x the Body centre height (0.9 stud on Ember Drake, 0.14 on the frog).
+					g.pivotFromBody = (restPivotInv * (body.CFrame * g.joint.C0)).Position - st.bodyCentre
 				end
 			end
 			if part == body or g.joint then
@@ -376,6 +380,61 @@ local function newRunner(move, opts, now)
 	}
 end
 
+-- M2-34 streaming: with StreamingEnabled a Workspace model can be on the client before its parts (Default/Nonatomic) or be
+-- streamed out and back. Boss models are Atomic/Persistent now (studio/SetupBosses, BuildReviewLine), so they arrive whole;
+-- this is the second line: a request on a model that is not whole yet is kept (the latest per model) and retried when parts
+-- arrive, for up to WAIT_WHOLE seconds, then with what is there. It never yields. TEAM CALL M2-34-2.
+local WAIT_WHOLE = 10
+local REQUIRED = { "Body", "Head", "FistL", "FistR" }
+local pending = setmetatable({}, { __mode = "k" }) -- model -> { fn, deadline }
+local forced = setmetatable({}, { __mode = "k" }) -- model -> true while a timed-out request is replayed with what is there
+
+local function streamingNeedsWait(model: Instance): boolean
+	if not (workspace.StreamingEnabled and model:IsDescendantOf(workspace)) then
+		return false
+	end
+	for _, g in ipairs(REQUIRED) do
+		local p = model:FindFirstChild(g, true)
+		if not (p and p:IsA("BasePart")) then
+			return true
+		end
+	end
+	local joints = 0
+	for _, d in ipairs(model:GetDescendants()) do
+		if d:IsA("Motor6D") then
+			joints += 1
+		end
+	end
+	return joints < #REQUIRED - 1
+end
+
+local function deferUntilWhole(model: Instance, fn)
+	local entry = pending[model]
+	if entry then
+		entry.fn = fn -- the latest request wins; the waiter already running picks it up
+		return
+	end
+	entry = { fn = fn, deadline = os.clock() + WAIT_WHOLE }
+	pending[model] = entry
+	task.spawn(function()
+		while pending[model] == entry do
+			local timedOut = os.clock() >= entry.deadline
+			if timedOut or not streamingNeedsWait(model) then
+				pending[model] = nil
+				if timedOut and not (model.PrimaryPart or model:FindFirstChild("Body", true)) then
+					warn("BossMoves: " .. model:GetFullName() .. " has no Body after " .. WAIT_WHOLE .. " s of streaming")
+					return
+				end
+				forced[model] = true
+				entry.fn()
+				forced[model] = nil
+				return
+			end
+			task.wait(0.1)
+		end
+	end)
+end
+
 local function getState(model)
 	local st = states[model]
 	if not st then
@@ -387,9 +446,24 @@ local function getState(model)
 	return st
 end
 
+-- nil when the model is not whole yet (the request is kept and replayed by deferUntilWhole)
+local function stateOrDefer(model, replay)
+	local st = states[model]
+	if st then
+		return st
+	end
+	if not forced[model] and streamingNeedsWait(model) then
+		deferUntilWhole(model, replay)
+		return nil
+	end
+	return getState(model)
+end
+
 -- API ---------------------------------------------------------------------------------------------------------
 function BossMoves.loop(model: Model, name: string, opts)
-	local st = getState(model)
+	local st = stateOrDefer(model, function()
+		BossMoves.loop(model, name, opts)
+	end)
 	if not st then
 		return false
 	end
@@ -410,7 +484,9 @@ function BossMoves.loop(model: Model, name: string, opts)
 end
 
 function BossMoves.play(model: Model, name: string, opts)
-	local st = getState(model)
+	local st = stateOrDefer(model, function()
+		BossMoves.play(model, name, opts)
+	end)
 	if not st then
 		return false
 	end
@@ -436,6 +512,7 @@ function BossMoves.play(model: Model, name: string, opts)
 end
 
 function BossMoves.stop(model: Model)
+	pending[model] = nil -- a request still waiting for the model's parts is cancelled too
 	local st = states[model]
 	if not st then
 		return
@@ -461,6 +538,13 @@ function BossMoves.current(model: Model)
 		return nil, nil
 	end
 	return st.base and st.base.name, st.overlay and st.overlay.name
+end
+
+-- M2-12 (TEAM CALL M2-12-1): the rest pivot a running state was started at (nil when no state: the model is at its rest
+-- pose). Controllers that carry a model somewhere else (the patrol, the carry) re-base the raw pose with it.
+function BossMoves.restPivot(model: Model): CFrame?
+	local st = states[model]
+	return st and st.restPivot or nil
 end
 
 function BossMoves.startPadIdle(model: Model)

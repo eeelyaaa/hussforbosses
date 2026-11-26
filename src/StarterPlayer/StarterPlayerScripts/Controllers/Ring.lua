@@ -2,11 +2,15 @@
 -- Controllers/Ring: the timing ring and the graded tap (m1-contract.md section D, "Client ring").
 -- A ring starts when the player stands on the own bag pad (or a fight is started) and the previous burst has
 -- ended. Ring n starts at local r0 and lands at r0 + ringClose. A tap at t (os.clock()) is graded by
--- d = |t - landing|: d <= perfect -> Perfect, d <= good -> Good, else Miss. A tap earlier than landing - 0.35 s
--- is ignored (button feedback only, no report). No tap by landing + good is a Miss reported with no
--- tapServerTime. A tap during a burst is ignored. After a Good or Perfect the next ring starts at t0 + BURST_LEN;
--- after a Miss at missTime + MISS_RESTART. Ring starts are scheduled times, not frame times, so a late frame
--- never pushes the schedule back.
+-- d = |t - landing|: d <= perfect -> Perfect, d <= good -> Good (both launch the three-punch burst). M2 (P3,
+-- m2-contract.md B2, m2-punch-numbers.md section 2): a tap anywhere else in the ring, from RING_GRACE_S after it
+-- opens, is "untimed": ONE report, ONE punch (the single huss, no burst, no F, no pips) and the ring is spent (it
+-- finishes closing, drawn dimmed; later taps in it are ignored). The next ring after an untimed tap opens at the
+-- ring's landing + MISS_RESTART. A tap in the first RING_GRACE_S, during a burst or in the wait is ignored (button
+-- feedback only, no report); a tap after landing + good finds the ring passed (ignored). No tap by landing + good is
+-- a Miss reported with no tapServerTime. After a Good or Perfect the next ring starts at t0 + BURST_LEN; after a
+-- Miss at missTime + MISS_RESTART. Ring starts are scheduled times, not frame times, so a late frame never pushes
+-- the schedule back.
 --
 -- API:
 --   Ring.init(view?)                 Heartbeat loop and the Punch.Schedule / Punch.Result listeners
@@ -16,6 +20,8 @@
 --   Ring.onBagPad() -> boolean       the player stands on the own bag pad (same radius as the server's test)
 --   Ring.current() -> state          { phase, context, n, r0, landing, ringClose, windows } (TestClient reads it)
 --   Ring.onEvent(fn)                 fn(kind, data) for "start", "graded", "ignored", "refused"
+--   Ring.setSinglePunch(fn)          fn(context, t) called in the tap's frame for an untimed punch (Main plays the huss,
+--                                    the jab and the Power pop; the view gets landed("untimed"), then setSpent(true) if it has it)
 --   Ring.log, Ring.ignored, Ring.schedule
 -- Seams: Ring.setSender(fn) (default Net Punch.Report), Ring.setBagPadTest(fn) (edit-mode test).
 local RunService = game:GetService("RunService")
@@ -29,7 +35,7 @@ local BurstClock = require(script.Parent:WaitForChild("BurstClock"))
 local P = Config.Punch
 local LOG_MAX = 60
 
-export type Phase = "off" | "ring" | "wait"
+export type Phase = "off" | "ring" | "spent" | "wait"
 
 local Ring = {}
 
@@ -41,7 +47,7 @@ Ring.schedule = {
 	fromServer = false,
 }
 Ring.log = {} :: { any }
-Ring.ignored = { early = 0, busy = 0, wait = 0, off = 0 }
+Ring.ignored = { early = 0, busy = 0, wait = 0, off = 0, grace = 0, spent = 0, late = 0 }
 
 local state = {
 	phase = "off" :: Phase,
@@ -60,6 +66,10 @@ local state = {
 local fightWindows: { goodMs: number, perfectMs: number }? = nil
 local view: any = nil
 local seq = 0
+local singlePunch: ((string, number) -> ())? = nil
+function Ring.setSinglePunch(fn: (string, number) -> ())
+	singlePunch = fn
+end
 local events: { (string, any) -> () } = {}
 
 local sender: ((any) -> ())? = nil
@@ -113,7 +123,7 @@ local function ownBagPad(): BasePart?
 	end
 	cachedAt = now
 	cachedPad = nil
-	local plots = workspace:FindFirstChild("Plots")
+	local plots = workspace:FindFirstChild("Plots") -- stream-ok: re-read every second until found
 	local me = Players.LocalPlayer
 	if not plots or not me then
 		return nil
@@ -232,22 +242,26 @@ end
 
 function Ring.tap(t: number, source: string?)
 	local src = source or "code"
+	if state.phase == "spent" then
+		ignore("spent", src)
+		return
+	end
 	if state.phase ~= "ring" then
 		ignore(if os.clock() < state.inBurstUntil then "busy" elseif state.phase == "wait" then "wait" else "off", src)
 		return
 	end
-	if t < state.landing - P.EARLY_TAP_S then
-		ignore("early", src)
+	if t < state.r0 + (P.RING_GRACE_S or 0.15) then
+		ignore("grace", src)
+		return
+	end
+	local w = state.windows
+	if t > state.landing + w.goodMs / 1000 then
+		ignore("late", src) -- the ring has passed; the step reports the Miss
 		return
 	end
 	local tapServer = workspace:GetServerTimeNow()
 	local dMs = math.abs(t - state.landing) * 1000
-	local w = state.windows
-	local grade = if dMs <= w.perfectMs then "perfect" elseif dMs <= w.goodMs then "good" else "miss"
-	if grade == "miss" then
-		miss(t, true, tapServer, dMs, (t - state.landing) * 1000)
-		return
-	end
+	local grade = if dMs <= w.perfectMs then "perfect" elseif dMs <= w.goodMs then "good" else "untimed"
 	local entry = lastEntry()
 	if entry then
 		entry.grade = grade
@@ -255,6 +269,31 @@ function Ring.tap(t: number, source: string?)
 		entry.tapped = true
 	end
 	local r = report(grade, tapServer)
+	if grade == "untimed" then
+		-- One punch now; the ring is spent and the next one opens on the schedule a perfect tap would have given.
+		state.phase = "spent"
+		state.prevEvent = t
+		state.nextStart = state.landing + P.MISS_RESTART
+		state.missUntil = state.nextStart
+		state.nextCause = "untimed"
+		if entry then
+			entry.seq = r.seq
+		end
+		local ok, err = pcall(sendReport, r)
+		if not ok then
+			warn("[HFB] Ring untimed report failed: " .. tostring(err))
+		end
+		callView("landed", "untimed")
+		callView("setSpent", true)
+		if singlePunch then
+			local okS, errS = pcall(singlePunch, state.context :: string, t)
+			if not okS then
+				warn("[HFB] Ring single punch failed: " .. tostring(errS))
+			end
+		end
+		emit("graded", { n = state.n, grade = grade, dMs = dMs, offMs = (t - state.landing) * 1000, seq = r.seq })
+		return
+	end
 	state.phase = "wait"
 	callView("setRing", nil)
 	callView("landed", grade)
@@ -275,8 +314,9 @@ function Ring.step(now: number)
 	local want: string? = if fightWindows then "fight" elseif bagPadTest() then "bag" else nil
 	if want ~= state.context then
 		state.context = want
-		if state.phase == "ring" then
+		if state.phase == "ring" or state.phase == "spent" then
 			callView("setRing", nil)
+			callView("setSpent", false)
 		end
 		if want == nil then
 			state.phase = "off"
@@ -293,6 +333,16 @@ function Ring.step(now: number)
 		-- Keep the schedule: start at the scheduled time unless the ring was held off for a while.
 		local at = if now - state.nextStart < 0.1 then state.nextStart else now
 		startRing(at)
+	end
+	if state.phase == "spent" then
+		-- the spent ring finishes closing, dimmed; at its landing it is gone and the wait to the next one runs
+		if now >= state.landing then
+			callView("setRing", nil)
+			callView("setSpent", false)
+			state.phase = "wait"
+		else
+			callView("setRing", math.clamp((now - state.r0) / state.ringClose, 0, 1))
+		end
 	end
 	if state.phase == "ring" then
 		local deadline = state.landing + state.windows.goodMs / 1000

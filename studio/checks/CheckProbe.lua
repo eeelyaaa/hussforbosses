@@ -99,7 +99,11 @@ local function moves()
 		local _, before = BM.current(model)
 		local r = orig(model, name, opts)
 		local _, after = BM.current(model)
-		table.insert(buf, { name, before or false, after or false, math.floor((os.clock() - t0) * 1000) })
+		-- M2-28: the review line (M2-32) loops every move on its own bosses all the time; only the fight's boss counts
+		local rl = workspace:FindFirstChild("ReviewLine")
+		if not (rl and typeof(model) == "Instance" and model:IsDescendantOf(rl)) then
+			table.insert(buf, { name, before or false, after or false, math.floor((os.clock() - t0) * 1000) })
+		end
 		return r
 	end
 	task.spawn(function()

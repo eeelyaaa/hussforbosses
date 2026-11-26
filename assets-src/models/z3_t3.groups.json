@@ -1,0 +1,210 @@
+{
+ "id": "z3_t3",
+ "cube": 0.22,
+ "cubes": 6044,
+ "bbox_cubes": [
+  -17,
+  -17,
+  0,
+  17,
+  18,
+  35
+ ],
+ "tris_atlas": 11228,
+ "meshes_atlas": [
+  [
+   "Body",
+   3028
+  ],
+  [
+   "Upper",
+   2064
+  ],
+  [
+   "Head",
+   3632
+  ],
+  [
+   "FistL",
+   1248
+  ],
+  [
+   "FistR",
+   1256
+  ]
+ ],
+ "tris_perrole": 11228,
+ "meshes_perrole": [
+  [
+   "Body_white",
+   128
+  ],
+  [
+   "Body_b1",
+   2234
+  ],
+  [
+   "Body_b5",
+   666
+  ],
+  [
+   "Upper_white",
+   178
+  ],
+  [
+   "Upper_b1",
+   1404
+  ],
+  [
+   "Upper_b5",
+   482
+  ],
+  [
+   "Head_white",
+   1266
+  ],
+  [
+   "Head_ink",
+   32
+  ],
+  [
+   "Head_b1",
+   1326
+  ],
+  [
+   "Head_b2",
+   130
+  ],
+  [
+   "Head_red",
+   432
+  ],
+  [
+   "Head_b5",
+   446
+  ],
+  [
+   "FistL_b1",
+   876
+  ],
+  [
+   "FistL_b2",
+   64
+  ],
+  [
+   "FistL_b5",
+   308
+  ],
+  [
+   "FistR_b1",
+   896
+  ],
+  [
+   "FistR_b2",
+   64
+  ],
+  [
+   "FistR_b5",
+   296
+  ]
+ ],
+ "tris_atlas_no_seam_faces": 9432,
+ "tris_perrole_greedy_merged_count_only": 6396,
+ "size_studs_blender_xyz": [
+  7.48,
+  7.7,
+  7.7
+ ],
+ "size_studs_roblox_xyz": [
+  7.48,
+  7.7,
+  7.7
+ ],
+ "groups": {
+  "Body": {
+   "pivot_cubes_blender": [
+    0,
+    0,
+    0
+   ],
+   "pivot_studs_blender": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "pivot_studs_roblox_offset_from_model_pivot": [
+    -0.0,
+    0.0,
+    0.0
+   ]
+  },
+  "Upper": {
+   "pivot_cubes_blender": [
+    0,
+    0,
+    9
+   ],
+   "pivot_studs_blender": [
+    0.0,
+    0.0,
+    1.98
+   ],
+   "pivot_studs_roblox_offset_from_model_pivot": [
+    -0.0,
+    1.98,
+    0.0
+   ]
+  },
+  "Head": {
+   "pivot_cubes_blender": [
+    0,
+    -2,
+    18
+   ],
+   "pivot_studs_blender": [
+    0.0,
+    -0.44,
+    3.96
+   ],
+   "pivot_studs_roblox_offset_from_model_pivot": [
+    -0.0,
+    3.96,
+    -0.44
+   ]
+  },
+  "FistL": {
+   "pivot_cubes_blender": [
+    6,
+    -2,
+    17
+   ],
+   "pivot_studs_blender": [
+    1.32,
+    -0.44,
+    3.74
+   ],
+   "pivot_studs_roblox_offset_from_model_pivot": [
+    -1.32,
+    3.74,
+    -0.44
+   ]
+  },
+  "FistR": {
+   "pivot_cubes_blender": [
+    -6,
+    -2,
+    17
+   ],
+   "pivot_studs_blender": [
+    -1.32,
+    -0.44,
+    3.74
+   ],
+   "pivot_studs_roblox_offset_from_model_pivot": [
+    1.32,
+    3.74,
+    -0.44
+   ]
+  }
+ }
+}

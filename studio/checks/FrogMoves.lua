@@ -15,6 +15,7 @@ for _, j in ipairs(body:GetChildren()) do if j:IsA("Motor6D") then J[j.Name] = {
 local function sigTip() return m.Sig.CFrame:PointToWorldSpace(Vector3.new(0, -0.5, -1.1)) end -- front-bottom of the jaw wedge
 local function fistFront(n) return m[n].CFrame:PointToWorldSpace(Vector3.new(0, 0, -0.9)) end
 local function pivotWorld(n) local j = body[n]; return body.CFrame * j.C0 end
+task.wait(4) -- M2-28: warm up; the first move in a fresh play session runs long and small (lesson M1-20)
 local rest = { tip = sigTip(), fr = fistFront("FistR"), fl = fistFront("FistL"), headTop = m.Head.CFrame:PointToWorldSpace(Vector3.new(0, 0.9, 0)) }
 P("INFO", ("rest sigTip rel Body y=%.3f z=%.3f"):format(rest.tip.Y - body.Position.Y, rest.tip.Z - body.Position.Z))
 -- direct sign test: Transform about X on the Sig joint

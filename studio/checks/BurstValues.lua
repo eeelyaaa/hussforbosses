@@ -2,11 +2,11 @@ if workspace:GetAttribute("HussForBosses") ~= true then error("PLACE-GUARD: not 
 -- M1-16: burst values and fight tap counts (team/requirements/m1-core-loop-gate.md; build plan M1 exit check 3).
 -- PLAY MODE, one call per phase:
 --   { phase = "a" }  the bag through the real client (AutoTap): Good = 4 (1/1/2) and Perfect = 8 (2/2/4) at
---                    0 / 0.213 / 0.401 s, the Miss restart 0.61 s, cycles 1.81 s (Speed 1) and 1.11 s (Speed 10);
+--                    0 / 0.213 / 0.401 s, the Miss restart 0.61 s, cycles 1.66 s (Speed 1) and 1.02 s (Speed 10) (M2, P2: the quicker ring);
 --                    then the all-Perfect fight tap counts at r = 0.5, 1, 1.5, 2, 3, 5 and each band's windows.
 --   { phase = "b" }  the all-Good fight tap counts at the same r, and B22 on punch 1 and on punch 2.
 -- Fight tap counts use forged reports (Punch.report, the handler after Net's limiter) with the real client's reports
--- held off (L.muteClient): the client's grade windows at r >= 2 are narrower than AutoTap's +70 ms Good tap, and
+-- held off (L.muteClient): the client's grade windows at r >= 3 are narrower than AutoTap's +70 ms Good tap, and
 -- the server believes the grade (bounded by time, rate and place), so the count is the server's damage rule.
 -- Power is set on the session so r takes each value (Chomp Frog is 25): 50, 25, 16.67, 12.5, 8.34, 5.
 local ARGS = ...
@@ -73,7 +73,7 @@ local function bag()
 	for _, g in ipairs(misses or {}) do if math.abs(g - 0.61) > 0.035 then okM = false end end
 	L.check(ctx, "Miss: no burst, the next ring 0.61 s later (two misses)", okM and #L.burstsSince(ctx, i0, "bag") == 0, misses and table.concat(misses, ",") or "none")
 	-- cycles: burst-to-burst on the server (t0 to t0) with AutoTap perfect, at Speed 1 and Speed 10
-	for _, sp in ipairs({ { 1, 1.81 }, { 10, 1.11 } }) do
+	for _, sp in ipairs({ { 1, 1.66 }, { 10, 1.02 } }) do
 		ctx.expect = "hook"
 		L.hook(ctx, "SetSpeed", sp[1])
 		task.wait(0.4)
@@ -101,6 +101,7 @@ end
 local function fight(power, grade)
 	Session.set(p, "power", power)
 	if Carry.get(p) then Carry.lose(p, "check") end
+	L.tp(ctx, L.nearBoss(ctx, "z1_fixed", ringPart)) -- the boss patrols: stand next to where it is now, every fight (M2-28)
 	task.wait(0.05)
 	local f = Fight.begin(p, "z1_fixed")
 	if not f then return nil, Fight.canStart(p, "z1_fixed") end
@@ -137,7 +138,7 @@ local function fights(grade, idx)
 	task.wait(0.3)
 	L.hook(ctx, "PadFastBack", 0)
 	Session.set(p, "speedLevel", 10)
-	L.tp(ctx, L.onPart(ctx, ringPart, 1, 1))
+	L.tp(ctx, L.nearBoss(ctx, "z1_fixed", ringPart)) -- next to where the boss patrols now (M2-28)
 	L.muteClient(ctx, true)
 	task.wait(1)
 	for _, c in ipairs(CASES) do

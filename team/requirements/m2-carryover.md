@@ -81,3 +81,22 @@ brackets, all under `verification/` unless noted. The M2 planner reads this firs
 | P7 | Stud texture vanishes and returns with distance: find cause, fix | builder + tech-lead | M2 |
 | P8 | Create the 10 passes and 9 developer products by computer use at the brief's prices; set the server size to 8; most other dashboard setup | main session (computer use) | M2 start |
 | P9 | Audio: upload everything at M4, the manager's yes covers the license agreement ticks | main session | M4 |
+
+## Added at M2 (orchestrator, 2026-11-26)
+| Item | Owner | When |
+|---|---|---|
+| R1: a thief with more than 500 arrivals within 60 days can push out the evidence for a victim whose transfer note is unresolved (owner left before the thief's save landed) [audits/m2-27-exploit-review.md Re-check] | data-engineer, qa | M5 |
+| R2: if a thief's save never landed and the owner stays away 60 days, the boss is dropped, not restored (crash-window loss, not a duplicate) [same] | data-engineer, qa | M5 |
+
+## Found in M2 for M3 to M5 (producer, M2-31, 2026-11-26)
+| Item | Owner | When |
+|---|---|---|
+| Star Golem reads stockier than the picture (m2-24 review): the manager's call, keep or slim | art-director, modeler-3d, manager | manager review, then M3 |
+| Chomp Frog notes still open (brow ends read like ear bumps, eyes set wide, nostril dots a whole cube) | modeler-3d | M3 |
+| Triangle budgets are over tier for the six bosses (golem 13,324 against 6,000; see `verification/m2-25-bosses-in-place.md`): picture wins at M2; measure on a weak phone with 136 placed bosses and 24 on pads | performance-optimizer, modeler-3d | M3 count, M5 measure |
+| `Input.on` is missing: the shop client and some screens use a key fallback; add it or keep the fallback on purpose | scripter | M3 |
+| Zone 3 arrives at 15 to 16 minutes against the brief's 11 (`m2-26-curves.md`); income 4 to 7 times the brief's line (Q4 PROVISIONAL, no change) | game-designer, manager | Q4 answer, M5 playtest data |
+| The toast and banner area: toasts sit under the steal alert; check them together on a phone (steal alert, toast, HUD) | gui-designer | M3 build, M5 Friction |
+| The boss review line must be removed before publishing: run `studio/RemoveReviewLine.lua` (Studio only, never in Live) | main session, builder | before any publish |
+| R1 and R2 (transfer-note evidence limits) stay M5 items, above | data-engineer, qa | M5 |
+| Good at Speed 10 measured 3.665 vs the old 3.92 expectation: not a bug (a Good tap ~63 ms late lengthens each cycle; recomputed 3.668, `Curves` fixed, m2-07 analysis). Whether late Goods feel slow at high Speed is a playtest question | game-designer | M5 playtest |

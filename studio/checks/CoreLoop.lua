@@ -73,7 +73,7 @@ local function phaseA()
 	L.tp(ctx, L.onPart(ctx, plot.BagPad))
 	L.waitFor(function() return Punch.stats.schedules > sch0 end, 2)
 	local sch = Punch.stats.lastSchedule[p.UserId]
-	L.check(ctx, "2 Punch.Schedule sent on the bag pad: ring 1.20, cycle 1.81", sch and math.abs(sch.ringClose - 1.2) < 1e-9 and math.abs(sch.cycle - 1.81) < 1e-9, sch and (s(sch.ringClose) .. "/" .. s(sch.cycle)))
+	L.check(ctx, "2 Punch.Schedule sent on the bag pad: ring 1.05, cycle 1.66 (M2, P2)", sch and math.abs(sch.ringClose - 1.05) < 1e-9 and math.abs(sch.cycle - 1.66) < 1e-9, sch and (s(sch.ringClose) .. "/" .. s(sch.cycle)))
 	local log0 = #Punch.stats.log
 	local rem0 = ctx.remotes["Punch.Report"]
 	L.hook(ctx, "AutoTap", "good")
@@ -83,7 +83,7 @@ local function phaseA()
 	end, 6)
 	workspace:SetAttribute("HFB_AutoTap", nil)
 	local rings = ringReports(rep0, "bag")
-	L.check(ctx, "2 the client's ring was drawn from that schedule (close 1.2)", #rings > 0 and math.abs((rings[1].close or 0) - 1.2) < 0.001, rings[1] and rings[1].close)
+	L.check(ctx, "2 the client's ring was drawn from that schedule (close 1.05)", #rings > 0 and math.abs((rings[1].close or 0) - 1.05) < 0.001, rings[1] and rings[1].close)
 	if L.check(ctx, "2 one Good burst applied by the server", b1 ~= nil and b1.beats[1].grade == "good", b1 and b1.beats[1].grade) then
 		local offs, lateOk = {}, true
 		for k, e in ipairs(b1.beats) do
@@ -167,14 +167,14 @@ local function phaseB()
 	local rep0 = #ctx.reports
 	local start0 = ctx.remotes["Fight.Start"]
 	L.hook(ctx, "AutoTap", "good")
-	L.tp(ctx, L.onPart(ctx, ringPart, 1, 1))
+	L.tp(ctx, L.nearBoss(ctx, "z1_fixed", ringPart)) -- next to where the boss patrols now (M2-28)
 	local started = L.waitFor(function()
 		for i = flog0 + 1, #Fight.stats.log do if Fight.stats.log[i].kind == "started" then return Fight.stats.log[i] end end
 	end, 5)
 	local f = Fight.get(p)
 	L.check(ctx, "5 the client's Huss press sent Fight.Start (remote)", ctx.remotes["Fight.Start"] > start0, ctx.remotes["Fight.Start"] - start0)
 	if L.check(ctx, "5 Fight.State started", started ~= nil and f ~= nil) then
-		L.check(ctx, "5 r = 1.0, band fair, windows 110/45 ms", f.ratio == 1 and f.band == "fair" and f.goodMs == 110 and f.perfectMs == 45, ("%s %s %s/%s"):format(s(f.ratio), f.band, s(f.goodMs), s(f.perfectMs)))
+		L.check(ctx, "5 r = 1.0, band fair, windows 130/55 ms (M2, P2)", f.ratio == 1 and f.band == "fair" and f.goodMs == 130 and f.perfectMs == 55, ("%s %s %s/%s"):format(s(f.ratio), f.band, s(f.goodMs), s(f.perfectMs)))
 		L.check(ctx, "5 health 250 (10 x 25), hearts 3", f.health == 250 and f.maxHealth == 250 and f.hearts == 3, ("%s/%s hearts %s"):format(s(f.health), s(f.maxHealth), s(f.hearts)))
 		local fid = f.fightId
 		local won = L.waitFor(function()
@@ -207,7 +207,7 @@ local function phaseB()
 		for _, r in ipairs(L.reportsSince(ctx, rep0, "beats")) do if r.data.c == "fight" then cb = r.data end end
 		L.check(ctx, "5 B22 on the client: the last fight burst's beat 3 carried noContact", cb ~= nil and cb.b[3] ~= nil and cb.b[3][6] == true, cb and cb.b[3] and tostring(cb.b[3][6]))
 		local fr = ringReports(rep0, "fight")
-		L.check(ctx, "5 the client's fight rings used the band's windows 110/45", #fr > 0 and fr[1].win[1] == 110 and fr[1].win[2] == 45, fr[1] and (s(fr[1].win[1]) .. "/" .. s(fr[1].win[2])))
+		L.check(ctx, "5 the client's fight rings used the band's windows 130/55", #fr > 0 and fr[1].win[1] == 130 and fr[1].win[2] == 55, fr[1] and (s(fr[1].win[1]) .. "/" .. s(fr[1].win[2])))
 		local open, left = Zones.isOpen(p, "z1_fixed")
 		L.check(ctx, "5 Zones.PadBeaten backIn = 10 (pad closed to the player ~10 s)", not open and left > 9 and left <= 10, ("%.2f"):format(left))
 	end

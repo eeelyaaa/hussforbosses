@@ -70,16 +70,51 @@ def voxelize(data):
     """Fills painted in order. `mirror` repeats the fill at x -> -x-1 (group `mirror_group` if given, colour hash
     taken from the source cube). `only_x` = [lo, hi) limits a fill to those x cube indices (before mirroring)."""
     vox = {}
+    under = {}  # first cube of another group that a fill overwrote (restored if the overwriting group is yawed away)
+    def put(k, v):
+        old = vox.get(k)
+        if old is not None and old[0] != v[0] and k not in under:
+            under[k] = old
+        vox[k] = v
     for f in data["fills"]:
         cols = f["c"]
         ox = f.get("only_x")
+        paint = f.get("paint")  # M2 redo: recolour existing cubes only (lava cracks, star specks), adds none
         for x, y, z in _cells(f):
             if ox and not (ox[0] <= x < ox[1]):
                 continue
+            if paint and (x, y, z) not in vox:
+                continue
             col = _pick(cols, x, y, z)
-            vox[(x, y, z)] = (f["g"], col)
+            put((x, y, z), (vox[(x, y, z)][0] if paint else f["g"], col))
             if f.get("mirror"):
-                vox[(-x - 1, y, z)] = (f.get("mirror_group", f["g"]), col)
+                if paint and (-x - 1, y, z) not in vox:
+                    continue
+                g2 = vox[(-x - 1, y, z)][0] if paint else f.get("mirror_group", f["g"])
+                put((-x - 1, y, z), (g2, col))
+    # M2-24: a group may carry a rest "yaw" (degrees about z through its pivot; + turns the front (-y) toward +x).
+    # The group's cubes are resampled on the grid (nearest source cube), so the pivot numbers never change.
+    for g, spec in data.get("groups", {}).items():
+        yaw = spec.get("yaw")
+        if not yaw:
+            continue
+        px, py = spec["pivot"][0], spec["pivot"][1]
+        src = {k: v for k, v in vox.items() if v[0] == g}
+        for k in src:
+            if k in under: vox[k] = under[k]
+            else: del vox[k]
+        a = math.radians(yaw); ca, sa = math.cos(a), math.sin(a)
+        xs = [k[0] for k in src]; ys = [k[1] for k in src]; zs = sorted(set(k[2] for k in src))
+        R = int(math.ceil(max(abs(min(xs) - px), abs(max(xs) + 1 - px), abs(min(ys) - py), abs(max(ys) + 1 - py)) * 1.5)) + 2
+        for x in range(int(px) - R, int(px) + R + 1):
+            for y in range(int(py) - R, int(py) + R + 1):
+                dx, dy = x + .5 - px, y + .5 - py
+                sx, sy = px + ca * dx + sa * dy, py - sa * dx + ca * dy   # inverse rotation
+                ix, iy = int(math.floor(sx)), int(math.floor(sy))
+                for z in zs:
+                    v = src.get((ix, iy, z))
+                    if v is not None:
+                        vox[(x, y, z)] = v
     return vox
 
 # six directions: normal, and the 4 corner offsets (CCW seen from outside)

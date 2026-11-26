@@ -115,7 +115,13 @@ local ok, err = pcall(function()
 		local pr = rect(root, P.pipFrame)
 		check(near(pr.x1 - pr.x0, (3 * U.pipPx + 2 * U.pipGap) * s, 1.5) and P.pipCells[1].frame.AbsoluteSize.X > 0, tag .. ": pips 18 px squares 4 px apart", ("%.1f px wide"):format(pr.x1 - pr.x0))
 		huss.landed("perfect")
-		check(P.popLabel.Text == Skin.Names.grades.perfect and P.popLabel.TextColor3 == Skin.Tokens.colors.flashYellow, tag .. ": landed(perfect) pops PERFECT in flash yellow")
+		-- M2-28: since M2-08 PERFECT floats above the button (a label of its own: checks/PerfectFloat.lua measures it); the small pop
+		-- slot stays hidden for it, and the word is the skin's, in flash yellow
+		local floatL
+		for _, d in ipairs(P.holder:GetChildren()) do
+			if d:IsA("TextLabel") and d.Name == "PerfectFloat" then floatL = d end
+		end
+		check(P.popLabel.Visible == false and floatL ~= nil and floatL.Text == Skin.Names.grades.perfect and floatL.TextColor3 == Skin.Tokens.colors.flashYellow, tag .. ": landed(perfect) floats PERFECT in flash yellow (the pop slot stays hidden; M2-08)")
 		huss.landed("good")
 		check(P.popLabel.Text == Skin.Names.grades.good and P.popLabel.TextColor3 == Skin.Tokens.colors.white, tag .. ": landed(good) pops GOOD in white")
 		huss.clearPips()
@@ -140,7 +146,10 @@ local ok, err = pcall(function()
 		C.setPower(1234567)
 		C.setCash(1240)
 		local cp = C.parts()
-		check(cp.powerValue.Text == "1,234,567" and cp.cashValue.Text == "$1,240", tag .. ": counters print full numbers with separators", cp.powerValue.Text .. " " .. cp.cashValue.Text)
+		-- M2-28: B16's short-number rule (Counters.short) replaced full separators from 10,000 up: 1,234,567 reads as the
+		-- short form, 1,240 stays with its separator
+		local wantPower = C.short(1234567)
+		check(wantPower ~= "1,234,567" and #wantPower <= 6 and cp.powerValue.Text == wantPower and cp.cashValue.Text == "$1,240", tag .. ": counters print numbers under 10,000 with separators and larger ones short (Counters.short)", cp.powerValue.Text .. " " .. cp.cashValue.Text)
 		local powerR = rect(root, cp.powerPlate)
 		check(near(powerR.y1 - powerR.y0, U.counterH * s, 1.5), tag .. ": counter plate 32 design px tall", ("%.1f px"):format(powerR.y1 - powerR.y0))
 		check(powerR.y0 >= game:GetService("GuiService").TopbarInset.Max.Y + 8 - 0.5, tag .. ": Power plate below the top bar (>= 8 px under TopbarInset; M1-25)", ("y0 %.1f px"):format(powerR.y0))

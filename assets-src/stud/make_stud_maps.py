@@ -40,6 +40,14 @@ save("stud-normal-256.png", rgb)
 flip = rgb.copy(); flip[..., 1] = 255 - flip[..., 1]
 save("stud-normal-flipped-256.png", flip)
 save("stud-color-256.png", np.dstack([np.full((256, 256), 242.0)] * 3))
+# M2-04: the same tile with the stud shading BAKED into the colour map (valleys and the wall foot darker). The flat #F2F2F2 map
+# left the stud only in the normal map, which mips to flat and fades with light angle and distance; colour contrast survives.
+hb = h.copy()
+for _ in range(2):                                   # soften 1 px so the foot reads as a shadow, not a line
+    hb = (hb + np.roll(hb, 1, 0) + np.roll(hb, -1, 0) + np.roll(hb, 1, 1) + np.roll(hb, -1, 1)) / 5
+BAKE_DARK = 0.30
+base = 242.0 * (1 - BAKE_DARK * (1 - np.clip(hb, 0, 1)) / max(1e-6, 1 - hb.min()))
+save("stud-color-baked-256.png", np.dstack([base] * 3))
 save("stud-rough-256.png", np.full((256, 256), 191.0))
 save("stud-ui-overlay-64.png", ns["overlay"]())
 print("wrote", sorted(f for f in os.listdir(HERE) if f.endswith(".png")))

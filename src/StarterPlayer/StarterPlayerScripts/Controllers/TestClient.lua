@@ -76,10 +76,17 @@ local plannedRing = -1
 local plan: { any } = {}
 local lagPending = false
 local lastStartPress = -math.huge
+local lastMash = -math.huge
 local lastDt = 1 / 60
 
-local function planFor(mode: string, landing: number): { any }
+local function planFor(mode: string, landing: number, r0: number?, goodMs: number?): { any }
 	local grade = if mode == "mix" then pickMix() else mode
+	if grade == "untimed" then
+		-- M2: one tap 0.3 s into the ring, kept inside it (after the 0.15 s grace, before the Good window opens)
+		local start = r0 or (landing - 1)
+		local latest = landing - (goodMs or 150) / 1000 - 0.04
+		return { { at = math.max(start + 0.17, math.min(start + 0.3, latest)), done = false } }
+	end
 	if grade == "perfect" or grade == "good" then
 		return { { at = landing + OFFSET[grade], done = false } }
 	elseif grade == "busy" then
@@ -107,9 +114,17 @@ local function autoTap(now: number)
 		return
 	end
 	local ring = Ring.current()
+	if mode == "mash" then
+		-- M2: a tap every 0.1 s through the real path, whatever the ring is doing (the mash-versus-timing check)
+		if now - lastMash >= 0.1 then
+			lastMash = now
+			Input.fire("punch", "auto", now)
+		end
+		return
+	end
 	if ring.phase == "ring" and ring.n ~= plannedRing then
 		plannedRing = ring.n
-		plan = planFor(mode, ring.landing)
+		plan = planFor(mode, ring.landing, ring.r0, ring.windows and ring.windows.goodMs)
 	end
 	for _, step in ipairs(plan) do
 		if not step.done and now + lastDt / 2 >= step.at then
@@ -258,6 +273,13 @@ function TestClient.setProbes(carry: any, base: any, hazards: any, pads: any?)
 		emit("base", base.snapshot())
 		if pads then
 			emit("pads", pads.snapshot())
+		end
+		local arrowMod = script.Parent:FindFirstChild("Arrow")
+		if arrowMod then
+			local okA, arrow = pcall(require, arrowMod)
+			if okA and type(arrow.snapshot) == "function" then
+				emit("arrow", arrow.snapshot()) -- M2-21: the first-session arrow (step, shown, done, position)
+			end
 		end
 		local s = hazards.state()
 		if s.meas then

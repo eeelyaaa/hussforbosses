@@ -1,222 +1,225 @@
 if workspace:GetAttribute("HussForBosses") ~= true then error("PLACE-GUARD: not the Huss for Bosses place; refusing to run", 0) end
--- M1-18: first-session times and fight lengths (game-designer). PLAY MODE ONLY; measures, changes no numbers.
--- Installed by hand as ServerStorage.TmpChecks.FirstSession (wrapped like the others; see m1-first-session.md).
---   { phase = "a", mix = "45,45,10" | "perfect" }   wiped join -> first punch, first Perfect, 25 Power, walk, first fight, win
---   { phase = "b", log = "clear" | "none" }          carried boss from the ring edge -> home, placed, 30 s of income, collected
---   { phase = "f", grade = "perfect"|"good"|"mix", cases = {1,2,3} }  fight lengths at r = .5,1,1.5,2,3,5 (index into CASES)
--- Walking is the server moving the character along the layout's waypoints at 16 (carry 12) studs/s.
+-- M2-21: gate row S21, the build plan's M2 "first session" exit check. PLAY MODE, installed into ServerStorage.TmpChecks next to CheckLib
+-- (CheckAll "install", then this file added from the sync server). Replaces M1-18's timing script (its numbers are in
+-- verification/m1-first-session.md). No real purchase: Shop.setPromptFn replaces Roblox's dialog; the Starter Pack pass is forced off with PassOwned.
+--   { phase = "a" }    wiped profile -> Joined, FirstBagPunch, FirstPerfectLanded (the real client taps, AutoTap), ReachedFirstBossPower (SetPower),
+--                      FirstFightStarted, FirstBossBeaten (the real fight), carry home, FirstBossPlaced, FirstCashCollected (ClockOffset),
+--                      FirstBossUpgraded, the Starter Pack offer once, StarterPackShown. The arrow's step is read from the real client
+--                      (Profile.TestReport "arrow") at every stage and must be gone after the first upgrade.
+--   { phase = "b" }    (continues "a" in the same play session) FirstStrengthBought, Zone2BossPlaced, the 12 events once and in order, the flags saved
+--                      (ForceSave, Leave, Rejoin: nothing fires again), kept through a rebirth.
+--   { phase = "all" }  a then b (the default).
+-- Walking is a teleport (the carry check starts over); the fight, the taps and the place are the real client unless the log says "fallback".
 local ARGS = ...
 if type(ARGS) ~= "table" then ARGS = {} end
 local L = {}
 require(game.ServerStorage.TmpChecks.CheckLib)(L)
-local Config, Punch, Fight, Zones, Carry, Base, Income, Session = L.Config, L.Punch, L.Fight, L.Zones, L.Carry, L.Base, L.Income, L.Session
+local SSS = game:GetService("ServerScriptService")
+local RS = game:GetService("ReplicatedStorage")
+local Ids = require(RS.Shared.Ids)
+local Config, Net, Session, Carry, Base, Income, Bag, Fight = L.Config, L.Net, L.Session, L.Carry, L.Base, L.Income, L.Bag, L.Fight
+local Shop = require(SSS.Systems.Shop)
+local Funnel = require(SSS.Systems.Funnel)
+local StarterPack = require(SSS.Systems.StarterPack)
+local Upgrades = require(SSS.Systems.Upgrades)
+local Rebirth = require(SSS.Systems.Rebirth)
+local Plots = require(SSS.Systems.Plots)
+
 local ctx = L.begin("FirstSession", ARGS)
 local p, hrp = ctx.p, ctx.hrp
+local function C(label, ok, detail) return L.check(ctx, label, ok, detail) end
+local phase = ARGS.phase or "all"
+local T0 = os.clock()
+local function P(...) print("M221", ...) end
+local KEY = "pass_starter_pack"
+local function prof() return Session.get(p) end
+local function names()
+	local out = {}
+	for _, e in ipairs(L.TestHooks.reports.funnel or {}) do table.insert(out, e.name) end
+	return out
+end
+local function marked(name) return table.find(names(), name) ~= nil end
+local function waitMark(name, secs) return L.waitFor(function() return marked(name) end, secs or 10) end
+local function arrow() -- the last "arrow" report from the real client
+	local last
+	for _, r in ipairs(ctx.reports) do if r.name == "arrow" then last = r.data end end
+	return last
+end
+local function waitArrow(step, secs)
+	return L.waitFor(function() local a = arrow(); return a and a.step == step and a.shown and a or nil end, secs or 4)
+end
 local plot = workspace.Plots.Plot1
 local ringPart = workspace.Zones.Z1.Pads.Fixed.Ring
-local function P(...) print("M118", ...) end
+local ringC = ringPart.Position
 local function flat(v) return Vector3.new(v.X, 0, v.Z) end
 
-local function walkTo(target, speed, stopFn)
-	local last = os.clock()
-	local dist = 0
-	while true do
-		task.wait()
-		local now = os.clock(); local dt = now - last; last = now
-		local go = flat(target) - flat(hrp.Position)
-		if go.Magnitude < 0.3 then break end
-		if stopFn and stopFn() then break end
-		local step = math.min(go.Magnitude, speed * dt)
-		ctx.char:PivotTo(CFrame.new(hrp.Position + go.Unit * step))
-		dist += step
-	end
-	return dist
+local sent = {}
+local origFire = Net.fire
+Net.fire = function(family, name, player, payload)
+	if player == p and family == "Shop" then table.insert(sent, { name = family .. "." .. name, payload = payload, at = os.clock() }) end
+	return origFire(family, name, player, payload)
 end
+Shop.setPromptFn(function() end)
+local function offersSent() local n = 0; for _, e in ipairs(sent) do if e.name == "Shop.Offer" then n += 1 end end; return n end
 
-local bp = plot.BagPad
-local door = Vector3.new(96, 0, plot.Entrance.Position.Z)
-local gate = Vector3.new(206, 0, 234)
-local ringC = ringPart.Position
-local dir = (flat(ringC) - flat(gate)).Unit
-local ringEdge = Vector3.new(ringC.X - dir.X * 5, 0, ringC.Z - dir.Z * 5)
-
-local function phaseA()
+local function stageA()
+	L.waitFor(function() return Session.get(p) ~= nil and Session.state(p) == "live" end, 20)
+	task.wait(1)
 	L.rootY(ctx)
-	local mix = ARGS.mix or "45,45,10"
+	L.TestHooks.reports.funnel = nil
+	L.hook(ctx, "PassOwned", "pass_starter_pack=off")
+	L.hook(ctx, "ReportBeats", true)
 	L.hook(ctx, "Wipe", true)
-	L.waitFor(function() return L.power(ctx) == 0 and workspace:GetAttribute("HFB_Wipe") == nil end, 2)
+	L.waitFor(function() return L.power(ctx) == 0 and workspace:GetAttribute("HFB_Wipe") == nil end, 3)
+	task.wait(0.5)
 	local sp = plot.SpawnPoint
 	L.tp(ctx, Vector3.new(sp.Position.X, hrp.Position.Y, sp.Position.Z))
-	local y = hrp.Position.Y
-	task.wait(0.3)
-	local led0 = #ctx.ledger
-	if mix == "perfect" then L.hook(ctx, "AutoTap", "perfect") else L.hook(ctx, "AutoMix", mix); L.hook(ctx, "AutoTap", "mix") end
-	local T0 = os.clock()
-	local ev = {}
-	-- walk spawn -> bag pad centre, while a watcher stamps the events
-	local fightLog0 = #Fight.stats.log
-	local plog0 = #Punch.stats.log
-	local stage = "bag"
-	local fpTime, perfT, p25T, firstPunchT
-	local function watch()
-		if not firstPunchT then
-			for i = led0 + 1, #ctx.ledger do if ctx.ledger[i].key == "power" and ctx.ledger[i].value > 0 then firstPunchT = ctx.ledger[i].at - T0; break end end
-		end
-		if not perfT then
-			for i = plog0 + 1, #Punch.stats.log do local e = Punch.stats.log[i]; if e.context == "bag" and e.grade == "perfect" and e.n == 1 then perfT = os.clock() - T0; break end end
-		end
-		if not p25T and L.power(ctx) >= 25 then p25T = os.clock() - T0 end
-		return p25T ~= nil
-	end
-	walkTo(Vector3.new(bp.Position.X, y, bp.Position.Z), 16)
-	ev.atBagPad = os.clock() - T0
-	local nb, n25 = 0, nil
-	while not watch() and os.clock() - T0 < 60 do task.wait(0.02) end
-	ev.firstPunch, ev.firstPerfect, ev.power25 = firstPunchT, perfT, p25T
-	-- bursts counted
-	local bursts = L.burstsSince(ctx, plog0, "bag")
-	local g = { perfect = 0, good = 0 }
-	for _, b in ipairs(bursts) do local gr = b.beats[1].grade; g[gr] = (g[gr] or 0) + 1 end
-	ev.burstsTo25 = #bursts; ev.perfects = g.perfect; ev.goods = g.good
-	-- let a burst in flight land (the player would have the power when the last beat lands): p25T is that moment
-	local tWalk = os.clock()
-	local tw = {}
-	local d1 = walkTo(Vector3.new(door.X, y, door.Z), 16)
-	ev.toDoor = d1
-	local d2 = walkTo(Vector3.new(gate.X, y, gate.Z), 16)
-	ev.gateT = os.clock() - T0; ev.bagToGate = d1 + d2
-	local d3 = walkTo(Vector3.new(ringEdge.X, y, ringEdge.Z), 16)
-	ev.atRing = os.clock() - T0; ev.runDist = d1 + d2 + d3; ev.runS = os.clock() - tWalk
-	-- standing in the ring: AutoTap presses Huss once a second
-	local started = L.waitFor(function()
-		for i = fightLog0 + 1, #Fight.stats.log do if Fight.stats.log[i].kind == "started" then return Fight.stats.log[i] end end
-	end, 8)
-	ev.fightStarted = os.clock() - T0
+	C("1 Joined fired for the wiped profile, nothing else yet", marked("Joined") and #names() == 1 and prof().flags.Joined == true, table.concat(names(), ","))
+	local a = waitArrow("bag", 5)
+	local bp = plot.BagPad
+	C("2 the arrow stands over the own bag pad before the first punch", a ~= nil and math.abs(a.x - bp.Position.X) < 10 and math.abs(a.z - bp.Position.Z) < 10 and a.y > bp.Position.Y, a and (a.step .. " " .. a.x .. "," .. a.y .. "," .. a.z) or "no report")
+	-- the real client taps on the bag pad
+	L.tp(ctx, L.onPart(ctx, bp))
+	L.hook(ctx, "AutoTap", "perfect")
+	C("3 FirstBagPunch and FirstPerfectLanded (real taps)", waitMark("FirstBagPunch", 20) and waitMark("FirstPerfectLanded", 20))
+	L.hook(ctx, "AutoTap", nil)
+	task.wait(1.5) -- let a burst in flight land
+	local firstPower = Config.Zones.POWER.z1_t1 or 25
+	C("4 the arrow is still on the bag below the first boss's Power", (arrow() or {}).step == "bag" or L.power(ctx) >= firstPower)
+	L.hook(ctx, "SetPower", firstPower)
+	C("5 ReachedFirstBossPower", waitMark("ReachedFirstBossPower", 5))
+	C("6 the arrow moves to the zone 1 boss pad", waitArrow("boss", 4) ~= nil, (arrow() or {}).step)
+	-- the real fight
+	local ringEdge = flat(ringC) + (flat(ringC) - flat(plot.Entrance.Position)).Unit * -5
+	L.tp(ctx, Vector3.new(ringEdge.X, hrp.Position.Y, ringEdge.Z))
+	L.hook(ctx, "PadFastBack", 0)
+	L.hook(ctx, "AutoTap", "good")
+	local started = waitMark("FirstFightStarted", 12)
 	if not started then
-		-- the edge may be outside the ring; step in
-		walkTo(Vector3.new(ringC.X, y, ringC.Z), 16)
-		started = L.waitFor(function()
-			for i = fightLog0 + 1, #Fight.stats.log do if Fight.stats.log[i].kind == "started" then return Fight.stats.log[i] end end
-		end, 8)
-		ev.fightStarted = os.clock() - T0
+		L.tp(ctx, Vector3.new(ringC.X, hrp.Position.Y, ringC.Z))
+		started = waitMark("FirstFightStarted", 12)
 	end
-	local f = Fight.get(p)
-	local fid = started and started.fightId
-	local res = L.waitFor(function()
-		for i = fightLog0 + 1, #Fight.stats.log do
-			local e = Fight.stats.log[i]
-			if e.fightId == fid and e.kind ~= "started" and e.kind ~= "beat" and e.kind ~= "heart" then return e end
-		end
-	end, 40)
-	ev.fightEndKind = res and res.kind
-	ev.fightEnded = os.clock() - T0
-	ev.fightSecs = res and started and (res.at - started.at)
-	local nbeats, hearts = 0, 0
-	for i = fightLog0 + 1, #Fight.stats.log do local e = Fight.stats.log[i]; if e.fightId == fid then if e.kind == "beat" then nbeats += 1 elseif e.kind == "heart" then hearts += 1 end end end
-	ev.hearts = hearts
-	local fb = L.burstsSince(ctx, plog0, "fight")
-	ev.fightBursts = #fb
-	for k, v in pairs(ev) do P(k, type(v) == "number" and ("%.2f"):format(v) or tostring(v)) end
-	P(("SUMMARY a mix=%s | atBag %.2f firstPunch %.2f firstPerfect %s p25 %s bursts %d(P%d G%d) | gate %.2f ring %.2f run %.2fs %.1f studs | fightStart %.2f end %.2f (%s %.2fs, bursts %d, hearts %d)"):format(
-		mix, ev.atBagPad, ev.firstPunch or -1, ev.firstPerfect and ("%.2f"):format(ev.firstPerfect) or "none", ev.power25 and ("%.2f"):format(ev.power25) or "none", ev.burstsTo25, ev.perfects, ev.goods,
-		ev.gateT, ev.atRing, ev.runS, ev.runDist, ev.fightStarted, ev.fightEnded, tostring(ev.fightEndKind), ev.fightSecs or -1, ev.fightBursts, ev.hearts))
-	workspace:SetAttribute("HFB_AutoTap", nil)
-end
-
-local function phaseB()
-	L.rootY(ctx)
-	L.hook(ctx, "Wipe", true)
-	L.waitFor(function() return L.power(ctx) == 0 and workspace:GetAttribute("HFB_Wipe") == nil end, 2)
-	L.hook(ctx, "PadFastBack", 0)
-	if ARGS.log == "clear" then L.hook(ctx, "LogForce", "clear") end
-	local y = hrp.Position.Y
-	L.tp(ctx, Vector3.new(ringEdge.X, y, ringEdge.Z))
-	task.wait(0.3)
-	L.hook(ctx, "GrantBoss", "z1_t1")
-	L.waitFor(function() return L.carryState(ctx) == "carrying" end, 2)
-	L.hook(ctx, "ReportBeats", true)
-	L.hook(ctx, "AutoInteract", true)
-	local T0 = os.clock()
-	local drops = 0
-	local lastState = "carrying"
-	local function track() local s = L.carryState(ctx); if s == "dropped" and lastState ~= "dropped" then drops += 1 end; lastState = s; return false end
+	C("7 FirstFightStarted (the real Huss press in the ring)", started == true)
+	C("8 FirstBossBeaten (three Good taps at equal Power)", waitMark("FirstBossBeaten", 40) == true)
+	L.hook(ctx, "AutoTap", nil)
+	L.waitFor(function() return L.carryState(ctx) == "carrying" end, 5)
+	C("9 the arrow points home while the first boss is carried", waitArrow("home", 5) ~= nil, (arrow() or {}).step)
+	-- carry home and place on spot 1
 	local spot = plot.Spot_1
-	local seq = { Vector3.new(gate.X, y, gate.Z), Vector3.new(door.X, y, door.Z) }
-	local tot = 0
-	local mark = {}
-	for _, w in ipairs(seq) do
-		-- a dropped boss waits for the Grab (AutoInteract); the walk goes on only while carrying
-		while true do
-			local d = walkTo(w, Config.Carry.CARRY, function() track(); return L.carryState(ctx) ~= "carrying" end)
-			tot += d
-			if L.carryState(ctx) == "carrying" then break end
-			local t = os.clock(); L.waitFor(function() return L.carryState(ctx) == "carrying" end, 6); mark.dropWait = (mark.dropWait or 0) + os.clock() - t
-			if L.carryState(ctx) ~= "carrying" then break end
-		end
-		mark[#mark + 1] = os.clock() - T0
+	L.tp(ctx, L.onPart(ctx, spot))
+	L.hook(ctx, "AutoInteract", true)
+	local placed = L.waitFor(function() return prof().spots[1] ~= nil end, 8)
+	if not placed then
+		P("fallback: Base.tryPlace (the client did not place in 8 s)")
+		L.note(ctx, "fallback: server-side Base.tryPlace")
+		Base.tryPlace(p, 1)
+		placed = L.waitFor(function() return prof().spots[1] ~= nil end, 3)
 	end
-	local d = walkTo(Vector3.new(spot.Position.X, y, spot.Position.Z), Config.Carry.CARRY, function() track(); return L.prof(ctx).spots[1] ~= nil end)
-	tot += d
-	local placedAt
-	L.waitFor(function() if L.prof(ctx).spots[1] ~= nil then placedAt = os.clock() - T0; return true end end, 6)
-	P(("carry home: gate %.2f door %.2f placed %s s, %.1f studs, drops %d, dropWait %.2f, log=%s"):format(mark[1] or -1, mark[2] or -1, placedAt and ("%.2f"):format(placedAt) or "NO", tot, drops, mark.dropWait or 0, tostring(ARGS.log)))
-	workspace:SetAttribute("HFB_AutoInteract", nil)
-	if placedAt and not ARGS.skipCollect then
-		local tp0 = os.clock()
-		local at30 = L.waitFor(function() return Income.onPad(L.prof(ctx).spots[1]) >= 30 end, 40)
-		P(("income: $30 on the pad %.2f s after placing (real clock)"):format(os.clock() - tp0))
-		local cash0 = L.prof(ctx).cash
-		local t1 = os.clock()
-		L.tp(ctx, L.onPart(ctx, plot.CashPad_1))
-		local col = L.waitFor(function() return L.prof(ctx).cash > cash0 end, 3)
-		P(("collected %s cash %.2f s after stepping on the pad (cash %s -> %s)"):format(tostring(col ~= nil), os.clock() - t1, tostring(cash0), tostring(L.prof(ctx).cash)))
-	end
+	L.hook(ctx, "AutoInteract", nil)
+	C("10 FirstBossPlaced on spot 1", placed ~= nil and marked("FirstBossPlaced"))
+	C("11 the arrow moves to the cash pad", waitArrow("cash", 4) ~= nil, (arrow() or {}).step)
+	-- cash: the income clock jumps ahead, the player steps on the cash pad
+	L.hook(ctx, "ClockOffset", 60)
+	task.wait(0.4)
+	L.tp(ctx, L.onPart(ctx, plot.CashPad_1))
+	C("12 FirstCashCollected", waitMark("FirstCashCollected", 8) == true, "cash " .. L.s(prof().cash))
+	L.hook(ctx, "ClockOffset", nil)
+	C("13 the arrow moves to the boss for the first upgrade", waitArrow("upgrade", 4) ~= nil, (arrow() or {}).step)
+	-- the first upgrade
+	local boss = prof().spots[1] and prof().bosses[1]
+	local cost = Upgrades.cost(boss.creatureId, boss.level + 1) or 30
+	if prof().cash < cost then L.hook(ctx, "SetCash", cost); task.wait(0.3) end
+	L.tp(ctx, L.onPart(ctx, plot.Spot_1))
+	local offers0 = offersSent()
+	local lvl0 = boss.level
+	Upgrades.tryUpgrade(p, boss.uid)
+	C("14 FirstBossUpgraded (a real upgrade, the level rose)", marked("FirstBossUpgraded") and prof().bosses[1].level == lvl0 + 1)
+	local gone = L.waitFor(function() local a = arrow(); return a and a.done and not a.shown and a or nil end, 4)
+	C("15 the arrow is gone after the first upgrade (destroyed on the client)", gone ~= nil, (arrow() or {}).step)
+	local offer = L.waitFor(function() return offersSent() > offers0 end, 5)
+	C("16 the Starter Pack offer was sent once, after the upgrade", offer ~= nil and offersSent() == offers0 + 1 and not marked("StarterPackShown"))
+	Upgrades.tryUpgrade(p, boss.uid)
+	task.wait(1.3)
+	C("17 a second upgrade does not offer again", offersSent() == offers0 + 1)
+	C("18 the client's OfferSeen (the screen, after the panel closes) marks StarterPackShown once", StarterPack.offerSeen(p, { key = KEY }) == true and StarterPack.offerSeen(p, { key = KEY }) == false and marked("StarterPackShown"))
 end
 
-local CASES = { { 0.5, 50 }, { 1, 25 }, { 1.5, 16.67 }, { 2, 12.5 }, { 3, 8.34 }, { 5, 5 } }
-local function phaseF()
-	L.hook(ctx, "Wipe", true)
+local function stageB()
+	-- FirstStrengthBought at the bag sign
+	L.hook(ctx, "SetCash", 5000)
 	task.wait(0.3)
-	L.hook(ctx, "PadFastBack", 0)
-	local y = hrp.Position.Y
-	local grade = ARGS.grade or "perfect"
-	if grade == "mix" then L.hook(ctx, "AutoMix", "45,45,10"); L.hook(ctx, "AutoTap", "mix") else L.hook(ctx, "AutoTap", grade) end
-	task.wait(0.5)
-	for _, idx in ipairs(ARGS.cases or { 1, 2, 3, 4, 5, 6 }) do
-		local c = CASES[idx]
-		L.tp(ctx, Vector3.new(ringC.X + 40, y, ringC.Z + 40))
-		task.wait(0.6)
-		if Carry.get(p) then Carry.lose(p, "check") end
-		Session.set(p, "power", c[2])
-		task.wait(0.3)
-		local plog0 = #Punch.stats.log
-		local f0 = #Fight.stats.log
-		L.tp(ctx, Vector3.new(ringC.X + 1, y, ringC.Z + 1))
-		local started = L.waitFor(function()
-			for i = f0 + 1, #Fight.stats.log do if Fight.stats.log[i].kind == "started" then return Fight.stats.log[i] end end
-		end, 6)
-		if not started then P(("r=%s: no fight started: %s"):format(c[1], tostring(Fight.canStart(p, "z1_fixed")))) else
-			local res = L.waitFor(function()
-				for i = f0 + 1, #Fight.stats.log do
-					local e = Fight.stats.log[i]
-					if e.fightId == started.fightId and e.kind ~= "started" and e.kind ~= "beat" and e.kind ~= "heart" then return e end
-				end
-			end, 40)
-			local hearts = 0
-			for i = f0 + 1, #Fight.stats.log do local e = Fight.stats.log[i]; if e.fightId == started.fightId and e.kind == "heart" then hearts += 1 end end
-			local bs = L.burstsSince(ctx, plog0, "fight")
-			local gs = {}
-			for _, b in ipairs(bs) do table.insert(gs, b.beats[1].grade:sub(1, 1)) end
-			P(("FIGHT %s r=%s band=%s power=%s: %s in %.2f s, bursts %d [%s], hearts lost %d"):format(grade, tostring(c[1]), started.band, tostring(L.power(ctx)), res and res.kind or "TIMEOUT", res and (res.at - started.at) or -1, #bs, table.concat(gs, ""), hearts))
-		end
-		task.wait(1.5)
-		if Fight.get(p) then task.wait(2) end
+	L.tp(ctx, L.onPart(ctx, plot.BagPad))
+	task.wait(0.3)
+	Bag.buyStrength(p, {})
+	C("19 FirstStrengthBought (Bag.BuyStrength, level 2)", marked("FirstStrengthBought") and prof().strengthLevel == 2, tostring(prof().strengthLevel))
+	-- zone 2: a zone 2 boss carried home and placed
+	L.hook(ctx, "SetZonesBeaten", "1")
+	L.hook(ctx, "SetPower", 250)
+	task.wait(0.3)
+	L.hook(ctx, "GrantBoss", "z2_t1,to=head")
+	L.waitFor(function() return L.carryState(ctx) == "carrying" end, 4)
+	local free = Base.freeSpot(p, prof()) or 2
+	L.tp(ctx, L.onPart(ctx, plot["Spot_" .. free]))
+	L.hook(ctx, "AutoInteract", true)
+	local placed = L.waitFor(function() return marked("Zone2BossPlaced") end, 8)
+	if not placed then
+		P("fallback: Base.tryPlace (the client did not place in 8 s)")
+		L.note(ctx, "fallback: server-side Base.tryPlace")
+		Base.tryPlace(p, free)
+		placed = L.waitFor(function() return marked("Zone2BossPlaced") end, 3)
 	end
-	workspace:SetAttribute("HFB_AutoTap", nil)
+	L.hook(ctx, "AutoInteract", nil)
+	C("20 Zone2BossPlaced", placed == true)
+	-- the whole funnel
+	local got = names()
+	local seen, dup = {}, false
+	for _, n in ipairs(got) do if seen[n] then dup = true end seen[n] = true end
+	C("21 all 12 events, each once", #got == 12 and not dup, table.concat(got, ","))
+	local inOrder = #got == #Ids.FUNNEL
+	for i, n in ipairs(Ids.FUNNEL) do if got[i] ~= n then inOrder = false end end
+	C("22 in the brief's order (Joined ... Zone2BossPlaced)", inOrder, table.concat(got, ","))
+	local allFlags = true
+	for _, n in ipairs(Ids.FUNNEL) do if prof().flags[n] ~= true then allFlags = false end end
+	C("23 all 12 are saved as flags on the profile", allFlags)
+	local ts = {}
+	for _, e in ipairs(L.TestHooks.reports.funnel or {}) do table.insert(ts, ("%s=%.0f"):format(e.name, e.t)) end
+	P("REAL TIMES (s since the wipe, scripted: teleports, income clock jumped 60 s): " .. table.concat(ts, " "))
+	-- repeats do nothing
+	local n0 = #names()
+	for _, n in ipairs(Ids.FUNNEL) do Funnel.mark(p, n) end
+	C("24 marking every event again logs nothing", #names() == n0)
+	-- saved and kept: leave, rejoin, rebirth
+	L.hook(ctx, "ForceSave", true)
+	task.wait(1)
+	if Carry.get(p) then Carry.lose(p, "check") end
+	L.hook(ctx, "Leave", true)
+	L.waitFor(function() return Session.get(p) == nil end, 10)
+	L.hook(ctx, "Rejoin", true)
+	L.waitFor(function() return Session.get(p) ~= nil and Session.state(p) == "live" end, 15)
+	task.wait(1)
+	local st = Session.state(p)
+	local kept = true
+	for _, n in ipairs(Ids.FUNNEL) do if not prof() or prof().flags[n] ~= true then kept = false end end
+	C("25 after Leave and Rejoin the flags are still there and no event fired again", kept and #names() == n0, st .. " " .. #names())
+	L.hook(ctx, "SetPower", Config.Rebirth.REQUIRED[1] + 1)
+	task.wait(0.3)
+	local rr = Rebirth.request(p, { confirmed = true })
+	task.wait(0.5)
+	local kept2 = true
+	for _, n in ipairs(Ids.FUNNEL) do if prof().flags[n] ~= true then kept2 = false end end
+	C("26 the flags survive a rebirth, and Joined / the rest do not fire again", rr and rr.ok and kept2 and #names() == n0, rr and tostring(rr.reason))
 end
 
 local ok, err = xpcall(function()
-	if ARGS.phase == "b" then phaseB() elseif ARGS.phase == "f" then phaseF() else phaseA() end
+	if phase == "a" or phase == "all" then stageA() end
+	if phase == "b" or phase == "all" then stageB() end
 end, debug.traceback)
-if not ok then P("SCRIPT ERROR", tostring(err):sub(1, 600)) end
+if not ok then C("the check ran to the end", false, tostring(err):sub(1, 500)) end
+pcall(function()
+	if Carry.get(p) then Carry.lose(p, "check") end
+	workspace:SetAttribute("HFB_Wipe", true)
+	task.wait(0.4)
+end)
+Shop.setPromptFn(nil)
+Net.fire = origFire
 L.finish(ctx)

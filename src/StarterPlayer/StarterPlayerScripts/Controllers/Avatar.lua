@@ -13,7 +13,11 @@
 --                                          third jab. Seeks to os.clock() - t0 if it starts late. Id 0 = no-op, warns once
 --   Avatar.cancel(character?)              stops both clips (fade 0.04 s)
 --   Avatar.carryHold(on, character?)       arms straight up while carrying (procedural, written after the animation)
---   Avatar.flinch()                        not asked at M1: no-op
+--   Avatar.playClip(name, opts?, character?) -> AnimationTrack?  name: flinch | carryHold | stealLift | knockdown | stun
+--                                          (M2-23). opts: { hold = seconds } stretches stealLift to the hold; { speed }.
+--                                          Id 0 = no-op, warns once. Markers: see team/verification/m2-23-avatar-clips.md
+--   Avatar.stopClip(name, character?)      stops one of those clips (fade 0.1 s)
+--   Avatar.flinch()                        = playClip("flinch")
 --   Avatar.hitLog                          { {n, elapsed, track} } for the "Hit" markers that fired (sync test)
 --   Avatar.setClipIds(t?)                  test seam: { R15 = {jab3, bigThird}, R6 = {...} } of ids or full content
 --                                          strings (e.g. KeyframeSequenceProvider ids); nil restores Skin.Models
@@ -360,7 +364,50 @@ function Avatar.startJab(grade: string, t0: number, character: Model?): boolean
 	return true
 end
 
-function Avatar.flinch() end -- not asked at M1
+-- ---------------------------------------------------------------- M2-23 clips (flinch, carryHold, stealLift, knockdown, stun)
+local otherTracks: { [Model]: { [string]: AnimationTrack } } = setmetatable({}, { __mode = "k" }) :: any
+local CLIP_LOOP = { carryHold = true }
+
+function Avatar.playClip(name: string, opts: any?, character: Model?): AnimationTrack?
+	local char = character or localCharacter()
+	if not char then
+		return nil
+	end
+	local set = otherTracks[char]
+	if not set then
+		set = {}
+		otherTracks[char] = set
+	end
+	local track = set[name]
+	if not track then
+		track = loadTrack(char, name)
+		if not track then
+			return nil
+		end
+		track.Looped = CLIP_LOOP[name] == true
+		set[name] = track
+	end
+	local speed = 1
+	if opts and opts.hold and opts.hold > 0 and name == "stealLift" then
+		speed = track.Length / opts.hold -- 2.0 s clip stretched to the hold (1.0 s with Quick Hands = 2x)
+	elseif opts and opts.speed then
+		speed = opts.speed
+	end
+	track:Play(0.05, 1, speed)
+	return track
+end
+
+function Avatar.stopClip(name: string, character: Model?)
+	local char = character or localCharacter()
+	local t = char and otherTracks[char] and otherTracks[char][name]
+	if t then
+		t:Stop(0.1)
+	end
+end
+
+function Avatar.flinch()
+	Avatar.playClip("flinch")
+end
 
 -- ---------------------------------------------------------------- carry hold
 -- Procedural: both shoulders raised straight up while carrying. Written after the animation each frame

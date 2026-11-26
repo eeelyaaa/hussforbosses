@@ -10,7 +10,10 @@
 --   Grab     : the prompt or interact (E / X) sends Carry.Grab { uid }.
 -- The body is moved by BossMoves each Heartbeat (Body.CFrame = rest pivot x pose); each RenderStepped this module re-bases
 -- the raw pose onto the head: world = target * restPivot^-1 * raw.
--- API: Carry.init(deps{Avatar, BossMoves, Prompts}), Carry.state() -> name, uid, creatureId, Carry.snapshot().
+-- M2-12: Carry.State { origin, level, bought, stolenFrom, speed } is kept (Carry.info()): Base's Sell and Swap read the level and
+--   the bought mark from it; the carried boss shows a "LEVEL n" label over its head (a studs-sized world label); the rock follows the
+--   server's carry speed (12, 16 with Fast Carry: BossMoves.setSpeed(model, speed / Config.Carry.CARRY)).
+-- API: Carry.init(deps{Avatar, BossMoves, Prompts}), Carry.state() -> name, uid, creatureId, Carry.info(), Carry.snapshot().
 local RunService = game:GetService("RunService")
 local Players = game:GetService("Players")
 local CollectionService = game:GetService("CollectionService")
@@ -25,6 +28,7 @@ local BossVisuals = require(script.Parent.BossVisuals)
 local Input = require(script.Parent.Input)
 local Fight = require(script.Parent.Fight)
 local Kit = require(script.Parent.Parent.Ui.Kit)
+local WorldLabel = require(script.Parent.Parent.Ui.WorldLabel)
 
 local C = Skin.Tokens.colors
 local CFG = Config.Carry
@@ -96,6 +100,42 @@ local function clearDropped()
 	end
 end
 
+local function levelText(level): string
+	local line = Skin.get("Names.ui.boss.level") or ""
+	return (string.gsub(line, "{n}", tostring(level or 1)))
+end
+
+-- A studs-sized "LEVEL n" over the carried boss (shrinks with distance like the world).
+local function addLevelLabel(model: Model)
+	local body = model.PrimaryPart
+	if not body then
+		return
+	end
+	local h = model:GetAttribute("H")
+	local gui = WorldLabel.new({
+		name = "CarryLevel",
+		adornee = body,
+		studsW = 6,
+		studsH = 1.4,
+		offset = Vector3.new(0, (if typeof(h) == "number" then h else 4) * 0.5 + 1.5, 0),
+		maxDistance = 100,
+	})
+	local label = Instance.new("TextLabel")
+	label.Name = "Level"
+	label.BackgroundTransparency = 1
+	label.Size = UDim2.fromScale(1, 1)
+	label.FontFace = Kit.Font()
+	label.TextScaled = true
+	label.TextColor3 = C.white
+	label.Text = levelText(S.level)
+	label.Parent = gui
+	local stroke = Instance.new("UIStroke")
+	stroke.Thickness = 2
+	stroke.Color = C.ink
+	stroke.Parent = label
+	return label
+end
+
 local function attach(creatureId: string)
 	clearCarried()
 	local target = headTarget()
@@ -107,8 +147,12 @@ local function attach(creatureId: string)
 		return
 	end
 	model:PivotTo(target)
-	carried = { model = model, rp = model:GetPivot(), raw = nil, written = nil }
+	carried = { model = model, uid = S.uid, rp = model:GetPivot(), raw = nil, written = nil }
+	carried.label = addLevelLabel(model)
 	call(moves, "loop", model, "carryRock", { phase = 0 })
+	if typeof(S.speed) == "number" then
+		call(moves, "setSpeed", model, S.speed / CFG.CARRY)
+	end
 	call(avatar, "carryHold", true)
 end
 
@@ -160,13 +204,7 @@ local function makeDropped(p)
 	anchor.Size = Vector3.new(0.2, 0.2, 0.2)
 	anchor.Position = dropPos + Vector3.new(0, lift * 2 + 2.2, 0)
 	anchor.Parent = BossVisuals.fx()
-	local gui = Instance.new("BillboardGui")
-	gui.Size = UDim2.fromOffset(64, 64)
-	gui.AlwaysOnTop = true
-	gui.LightInfluence = 0
-	gui.MaxDistance = 400
-	gui.Adornee = anchor
-	gui.Parent = anchor
+	local gui = WorldLabel.new({ name = "DropPlate", adornee = anchor, studsW = 4, studsH = 4 })
 	local plate = Instance.new("Frame")
 	plate.Name = "Plate"
 	plate.Size = UDim2.fromScale(1, 1)
@@ -270,7 +308,20 @@ local function onState(p)
 		return
 	end
 	S.prev = S.name
-	S = { name = p.state, uid = p.uid, creatureId = p.creatureId, dropPos = p.dropPos, graceEnds = p.graceEnds, prev = S.name }
+	S = {
+		name = p.state, uid = p.uid, creatureId = p.creatureId, dropPos = p.dropPos, graceEnds = p.graceEnds, prev = S.name,
+		origin = p.origin, level = p.level, bought = p.bought, speed = p.speed, stolenFrom = p.stolenFrom,
+	}
+	if p.state == "carrying" and carried and carried.model.Parent and S.prev == "carrying" and carried.uid == p.uid then
+		-- the same carry re-sent (Fast Carry bought, a level change): update, do not rebuild
+		if carried.label then
+			carried.label.Text = levelText(S.level)
+		end
+		if typeof(S.speed) == "number" then
+			call(moves, "setSpeed", carried.model, S.speed / CFG.CARRY)
+		end
+		return
+	end
 	if p.state == "carrying" then
 		clearCarried()
 		startCarrying(p)
@@ -324,6 +375,11 @@ function Carry.state()
 	return S.name, S.uid, S.creatureId
 end
 
+-- What Base's Sell and Swap need (and the check reads): the server's last Carry.State.
+function Carry.info()
+	return { state = S.name, uid = S.uid, creatureId = S.creatureId, level = S.level, bought = S.bought, origin = S.origin, speed = S.speed, stolenFrom = S.stolenFrom }
+end
+
 function Carry.snapshot()
 	local r = root()
 	local d = carried and carried.err
@@ -341,6 +397,9 @@ function Carry.snapshot()
 		plate = dropped and dropped.label.Text or nil,
 		grab = grabShown,
 		hop = hopping,
+		lvl = carried and carried.label and carried.label.Text or nil,
+		origin = S.origin,
+		speed = S.speed,
 		hidden = next(sources) ~= nil,
 		dist = r and S.dropPos and math.floor((r.Position - S.dropPos).Magnitude * 10 + 0.5) / 10 or nil,
 	}

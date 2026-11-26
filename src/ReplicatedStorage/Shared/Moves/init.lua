@@ -2,7 +2,7 @@
 -- Moves: the boss move tables (m1-contract.md section H). Structure, not skin: fractions of the boss's height H,
 -- degrees, seconds, group names. No display names, colours or asset ids.
 --
---   Moves.get(bodyType)                 -> the body-type set (2 = squat stomper) or nil
+--   Moves.get(bodyType, creatureId?)    -> the body-type set (1 biped, 2 squat, 3 tailed, 5 swayer) or nil
 --   Moves.sig(creatureId)               -> the creature's signature set { attack, lastHeart } or nil
 --   Moves.resolve(bodyType, creatureId, name) -> the move table: the signature's if it has one, else the set's
 --   Moves.check(set, label)             -> { problem strings } (empty = the schema holds)
@@ -24,16 +24,38 @@
 local Moves = {}
 
 Moves.NAMES = { "idle", "guard", "hitGood", "hitPerfect", "hitBig", "attack", "lastHeart", "gloat", "defeat", "halfIdle", "carryRock" }
-Moves.GROUPS = { "Body", "Head", "Sig", "FistL", "FistR" }
+-- Upper (the rearing swayer's upper body), TailA and TailB (the tailed striker's tail) are M2's; a boss without a group
+-- skips it. All joints hang off Body (B11), so a group riding another is made flat in Moves/_lib.lua.
+Moves.GROUPS = { "Body", "Upper", "Head", "Sig", "FistL", "FistR", "TailA", "TailB" }
 -- The brief's lengths (style guide section 5); loops have no brief length.
 Moves.LENGTHS = { hitGood = 0.15, hitPerfect = 0.2, hitBig = 0.3, attack = 0.45, lastHeart = 1.0, gloat = 0.35, defeat = 0.8 }
 
-local BODY_TYPE_MODULES = { [2] = "squat" }
+-- Body types (Skins Models bodyType; build plan "Body types"): 1 biped bruiser, 2 squat stomper, 3 tailed striker,
+-- 5 rearing swayer. 4 charger, 6 flyer, 7 floater are M3.
+local BODY_TYPE_MODULES = { [1] = "biped", [2] = "squat", [3] = "tailed", [5] = "swayer" }
 
-function Moves.get(bodyType: number)
+local Geo = require(script._geo)
+local built = {} -- sets made from a pivot layout, one per creature (or per body type when the creature has no layout yet)
+
+-- The body type's set. Squat's is a plain table; the others are built from the creature's pivot layout (_geo.lua), the
+-- body type's reference boss when the creature has none.
+function Moves.get(bodyType: number, creatureId: string?)
 	local name = BODY_TYPE_MODULES[bodyType]
 	local m = name and script:FindFirstChild(name)
-	return m and require(m) or nil
+	local mod = m and require(m)
+	if not mod then
+		return nil
+	end
+	if not mod.build then
+		return mod
+	end
+	local key = (creatureId and Geo.creatures[creatureId]) and creatureId or ("type" .. bodyType)
+	local set = built[key]
+	if not set then
+		set = mod.build(Geo.of(creatureId, bodyType))
+		built[key] = set
+	end
+	return set
 end
 
 function Moves.sig(creatureId: string)
@@ -47,7 +69,7 @@ function Moves.resolve(bodyType: number, creatureId: string?, name: string)
 	if sig and sig[name] then
 		return sig[name]
 	end
-	local set = Moves.get(bodyType)
+	local set = Moves.get(bodyType, creatureId)
 	return set and set[name] or nil
 end
 

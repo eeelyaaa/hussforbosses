@@ -1,7 +1,8 @@
 --!nonstrict
 -- Ui/Counters: the Power plate (Huss red) and the cash plate (cash green), top left (style guide 6, "Counter plates").
 --   setPower(n)   setCash(n)   popPower(amount, big, fromPos?)   popCash(amount, fromScreen?)  (popCash: M1-14)
--- M1 prints full numbers with thousands separators; shortening (48.2K) is M2 (B16). The plates are studded, 32 px tall,
+-- M2 (B16, TEAM CALL M2-13-1): below 10,000 full with separators (1,240); from 10,000 shortened with one decimal cut down,
+-- never rounded up, and ".0" dropped (48.2K, 10.4M, 10M); suffixes from Skin.Names.ui.suffix. Counters.short(n) is the one rule. The plates are studded, 32 px tall,
 -- 3 px ink outline, icon 36 px overlapping the left edge by 8 px, number 18 px white with an ink outline, not pressable.
 -- Icons are plain stand-ins while Skin.Icons.power / cash are 0 (M3 uploads).
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -13,8 +14,29 @@ local C, U, TY = Skin.Tokens.colors, Skin.Tokens.ui, Skin.Tokens.type
 local Counters = {}
 local S = nil
 
-local CASH_PREFIX = "$"
+local CASH_PREFIX = Skin.Names.ui.cashPrefix
 local MIN_PLATE_W = 96
+
+-- B16: the one number-shortening rule for every screen.
+function Counters.short(n: number): string
+	n = math.floor(n + 0.5)
+	if n < 10000 then
+		return Kit.commas(n)
+	end
+	local suf = Skin.Names.ui.suffix
+	local v, i = n, 0
+	while v >= 1000 and i < #suf do
+		v /= 1000
+		i += 1
+	end
+	local t = math.floor(v * 10 + 1e-6) / 10
+	if t >= 1000 and i < #suf then
+		t /= 1000
+		i += 1
+	end
+	local s = if t % 1 == 0 then string.format("%d", t) else string.format("%.1f", t)
+	return s .. suf[i]
+end
 
 local function plate(parent: Instance, name: string, fill: Color3, iconKey: string, standIn: Color3)
 	local f = Kit.Plate(parent, { name = name, fill = fill, size = UDim2.fromOffset(MIN_PLATE_W, U.counterH) })
@@ -90,7 +112,7 @@ function Counters.setPower(n: number)
 		return
 	end
 	S.power = n
-	S.powerValue.Text = Kit.commas(n)
+	S.powerValue.Text = Counters.short(n)
 end
 
 function Counters.setCash(n: number)
@@ -98,7 +120,7 @@ function Counters.setCash(n: number)
 		return
 	end
 	S.cash = n
-	S.cashValue.Text = CASH_PREFIX .. Kit.commas(n)
+	S.cashValue.Text = CASH_PREFIX .. Counters.short(n)
 end
 
 -- keep a pop's start point (design px) out from under Roblox's top bar: its half height (15) plus 10 screen px below TopbarInset
@@ -119,7 +141,7 @@ function Counters.popPower(amount: number, big: boolean?, fromPos: Vector2?)
 	local from = clampBelowTopbar(root, fromPos or (target + Vector2.new(40, 90)))
 	local label = Kit.Text(root, {
 		name = "PowerPop",
-		text = "+" .. Kit.commas(amount),
+		text = "+" .. Counters.short(amount),
 		size = big and 26 or TY.huss,
 		anchor = Vector2.new(0.5, 0.5),
 		position = UDim2.fromOffset(from.X, from.Y),
@@ -147,7 +169,7 @@ function Counters.popCash(amount: number, fromScreen: Vector2?)
 	local from = clampBelowTopbar(root, if fromScreen then (fromScreen - root.AbsolutePosition) / Kit.scale() else (target + Vector2.new(40, 90)))
 	local label = Kit.Text(root, {
 		name = "CashPop",
-		text = "+" .. CASH_PREFIX .. Kit.commas(amount),
+		text = "+" .. CASH_PREFIX .. Counters.short(amount),
 		size = TY.huss,
 		anchor = Vector2.new(0.5, 0.5),
 		position = UDim2.fromOffset(from.X, from.Y),

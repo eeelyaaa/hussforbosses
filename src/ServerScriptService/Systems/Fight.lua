@@ -18,6 +18,7 @@ local Net = require(Shared.Net)
 local Session = require(script.Parent.Parent.Data.Session)
 local Zones = require(script.Parent.Zones)
 local Bag = require(script.Parent.Bag)
+local Funnel = require(script.Parent.Funnel)
 
 export type FightT = {
 	fightId: number,
@@ -35,6 +36,7 @@ export type FightT = {
 	startedAt: number,
 	over: boolean,
 	spot: Vector3?, -- where the server stood the player for the fight (M1-26b), sent in Fight.State started
+	bossPos: Vector3?, -- where the boss stood (froze) for this fight (contract E), sent in Fight.State started
 }
 
 local Fight = {}
@@ -92,6 +94,7 @@ local function statePayload(f: FightT, state: string, reason: string?): any
 		maxHealth = f.maxHealth,
 		hearts = f.hearts,
 		spot = if state == "started" then f.spot else nil,
+		bossPos = if state == "started" then f.bossPos else nil,
 	}
 end
 
@@ -163,6 +166,7 @@ local function finish(player: Player, f: FightT, state: string, reason: string?)
 	if state == "win" then
 		unfreeze(player)
 		Zones.markBeaten(player, f.padId)
+		Funnel.mark(player, "FirstBossBeaten")
 	elseif state == "loss" and (reason == "died" or reason == "left") then
 		unfreeze(player)
 		Zones.closeFor(player, f.padId, Config.Fight.PAD_COOLDOWN_S)
@@ -198,7 +202,8 @@ local function finish(player: Player, f: FightT, state: string, reason: string?)
 end
 Fight.finish = finish
 
--- One punch of a burst at its beat (called by Systems/Punch's beat queue). Returns true when it made contact.
+-- One punch of a burst at its beat (called by Systems/Punch's beat queue), or the single punch of an untimed tap
+-- (grade 'untimed', n = 1: Power x GRADE_VALUE.untimed, Fight.Beat size 'single'). Returns true when it made contact.
 -- B22: health is checked first; the beat that empties the bar wins and the caller stops the burst.
 function Fight.applyBeat(player: Player, fightId: number, burstSeq: number, grade: string, n: number): (boolean, boolean)
 	local f = fights[player]
@@ -214,7 +219,7 @@ function Fight.applyBeat(player: Player, fightId: number, burstSeq: number, grad
 		fightId = f.fightId,
 		burstSeq = burstSeq,
 		n = n,
-		size = grade,
+		size = if grade == "untimed" then "single" else grade,
 		big = n == 3,
 		damage = damage,
 		health = f.health,
@@ -239,6 +244,21 @@ function Fight.miss(player: Player, why: string)
 	if last then
 		finish(player, f, "loss")
 	end
+end
+
+-- Where the boss of a pad stands now and the extra slack for a moving boss (contract E). Zones.bossPosition is
+-- M2-10's; until it exists (or when it answers nil) the pad's ring centre, no extra slack.
+function Fight.bossCentre(padId: string, pad: Zones.Pad): (Vector3, number)
+	local fn = (Zones :: any).bossPosition
+	if type(fn) == "function" then
+		local ok, pos = pcall(fn, padId, Zones.now())
+		if ok and typeof(pos) == "Vector3" then
+			local patrol = (Config :: any).Zones and (Config :: any).Zones.PATROL
+			local slack = if type(patrol) == "table" and type(patrol.slack) == "number" then patrol.slack else 0
+			return Vector3.new(pos.X, pad.ring.Position.Y, pos.Z), slack
+		end
+	end
+	return pad.ring.Position, 0
 end
 
 -- Fight.Start's checks, in order; returns nil when the fight may start, else the refusal reason.
@@ -268,8 +288,11 @@ function Fight.canStart(player: Player, padId: any): string?
 	if not Zones.isOpen(player, padId) then
 		return "closed"
 	end
-	local d = r.Position - pad.ring.Position
-	if Vector3.new(d.X, 0, d.Z).Magnitude > pad.radius + Config.Fight.RING_SLACK or math.abs(d.Y) > 10 then
+	-- "In the ring" is against where the boss is now (contract C/E: Zones.bossPosition once M2-10's patrol lands,
+	-- with PATROL.slack more), else the pad's ring.
+	local centre, slack = Fight.bossCentre(padId, pad)
+	local d = r.Position - centre
+	if Vector3.new(d.X, 0, d.Z).Magnitude > pad.radius + Config.Fight.RING_SLACK + slack or math.abs(d.Y) > 10 then
 		return "ring"
 	end
 	return nil
@@ -305,17 +328,22 @@ end
 -- half-extent + GAP_H x H, on the pad (RingRadius - EDGE_MARGIN) and short of walls; facing the boss. If the ring
 -- leaves less than MIN_GAP on that side, the line turns (15 degree steps, either way) to the nearest side that has
 -- room. Pure apart from one raycast per tried line; returns nil when there is no boss.
-function Fight.fightSpot(pad: Zones.Pad, fromPos: Vector3, rootHeight: number, ignore: { Instance }): CFrame?
+-- bossAt (M2-06 follow-up to M2-10's patrol): where the boss is frozen for this fight (Fight.State.bossPos). The
+-- server's boss model stands at rest; its box and the pad's ring are moved by (bossAt - the model's rest pivot), flat,
+-- so the spot is built around the walking boss exactly as M1-26b builds it around the resting one.
+function Fight.fightSpot(pad: Zones.Pad, fromPos: Vector3, rootHeight: number, ignore: { Instance }, bossAt: Vector3?): CFrame?
 	local S = Config.Fight.SPOT
 	local boss = bossOf(pad)
 	if not boss then
 		return nil
 	end
+	local offset = Fight.patrolOffset(pad, bossAt)
 	local bbCf, bbSize = boss:GetBoundingBox()
+	bbCf = bbCf + offset
 	local h = boss:GetAttribute("H")
 	local height = if typeof(h) == "number" and h > 0 then h else bbSize.Y
 	local c = bbCf.Position
-	local ringC = pad.ring.Position
+	local ringC = pad.ring.Position + offset
 	local y = ringC.Y + pad.ring.Size.Y / 2 + rootHeight
 	local maxR = pad.radius - S.EDGE_MARGIN
 	local params = RaycastParams.new()
@@ -366,6 +394,20 @@ function Fight.fightSpot(pad: Zones.Pad, fromPos: Vector3, rootHeight: number, i
 	return CFrame.lookAt(pos, Vector3.new(c.X, y, c.Z))
 end
 
+-- The flat move from the boss model's rest pivot to bossAt (zero without a boss, without bossAt, or for a bad value).
+function Fight.patrolOffset(pad: Zones.Pad, bossAt: Vector3?): Vector3
+	local boss = bossOf(pad)
+	if not boss or typeof(bossAt) ~= "Vector3" or bossAt ~= bossAt then
+		return Vector3.zero
+	end
+	local rest = boss:GetPivot().Position
+	local d = Vector3.new(bossAt.X - rest.X, 0, bossAt.Z - rest.Z)
+	-- never further than the patrol can walk (halfLen) plus a stud: a wrong bossAt cannot throw the fighter across the map
+	local patrol = (Config :: any).Zones and (Config :: any).Zones.PATROL
+	local limit = (if type(patrol) == "table" and type(patrol.halfLen) == "number" then patrol.halfLen else 0) + 1
+	return if d.Magnitude <= limit then d else Vector3.zero
+end
+
 -- The root's height above the floor for this rig (R15: HipHeight + half the root; R6: legs of 2).
 local function rootHeightOf(hum: Humanoid, root: BasePart): number
 	if hum.RigType == Enum.HumanoidRigType.R15 then
@@ -376,19 +418,20 @@ end
 
 -- Moves the character to the fight spot (server side, so every client sees the same). Validated: finite, on the
 -- pad, and no further from where the player stood than the ring's diameter plus the start slack.
-local function standAtSpot(player: Player, pad: Zones.Pad): Vector3?
+local function standAtSpot(player: Player, pad: Zones.Pad, bossAt: Vector3?): Vector3?
 	local char = player.Character
 	local hum = char and char:FindFirstChildOfClass("Humanoid")
 	local root = Bag.root(player)
 	if not (char and hum and root) then
 		return nil
 	end
-	local cf = Fight.fightSpot(pad, root.Position, rootHeightOf(hum, root), { char })
+	local cf = Fight.fightSpot(pad, root.Position, rootHeightOf(hum, root), { char }, bossAt)
 	if not cf then
 		return nil
 	end
 	local p = cf.Position
-	local dRing = Vector3.new(p.X - pad.ring.Position.X, 0, p.Z - pad.ring.Position.Z).Magnitude
+	local ringC = pad.ring.Position + Fight.patrolOffset(pad, bossAt)
+	local dRing = Vector3.new(p.X - ringC.X, 0, p.Z - ringC.Z).Magnitude
 	local moved = (p - root.Position).Magnitude
 	if p ~= p or dRing > pad.radius + 1e-3 or moved > 2 * pad.radius + Config.Fight.RING_SLACK + 10 then
 		warn(("[HFB] Fight: fight spot refused (ring %.1f, moved %.1f)"):format(dRing, moved))
@@ -433,7 +476,10 @@ function Fight.begin(player: Player, padId: string): FightT?
 	}
 	fights[player] = f
 	freeze(player)
-	f.spot = standAtSpot(player, pad)
+	-- the boss is frozen where it walked to (contract E); the fighter's spot is built around that position
+	f.bossPos = (Fight.bossCentre(padId, pad))
+	f.spot = standAtSpot(player, pad, f.bossPos)
+	Funnel.mark(player, "FirstFightStarted")
 	logEvent({ kind = "started", fightId = f.fightId, ratio = ratio, band = band.id, health = health, at = f.startedAt })
 	Net.get("Fight", "State"):FireClient(player, statePayload(f, "started"))
 	for _, fn in ipairs(startFns) do

@@ -4,10 +4,15 @@
 return {
 	creatures = {
 		z1_t1 = { model = "Boss_z1_t1_stub", bodyType = 2, heightStuds = 4, groups = { Body = 0, Head = 0, Sig = 0, FistL = 0, FistR = 0 }, textureId = 0 },
+		z2_t2 = { model = "Boss_z2_t2_stub", bodyType = 2, heightStuds = 4, groups = { Body = 0, Head = 0, FistL = 0, FistR = 0, TailA = 0, TailB = 0 }, textureId = 0 },
+		z3_t3 = { model = "Boss_z3_t3_stub", bodyType = 2, heightStuds = 4, groups = { Body = 0, Upper = 0, Head = 0, FistL = 0, FistR = 0 }, textureId = 0 },
+		z4_t4 = { model = "Boss_z4_t4_stub", bodyType = 2, heightStuds = 4, groups = { Body = 0, Head = 0, FistL = 0, FistR = 0 }, textureId = 0 },
+		z5_t5 = { model = "Boss_z5_t5_stub", bodyType = 2, heightStuds = 4, groups = { Body = 0, Head = 0, FistL = 0, FistR = 0, TailA = 0, TailB = 0 }, textureId = 0 },
+		z6_t6 = { model = "Boss_z6_t6_stub", bodyType = 2, heightStuds = 4, groups = { Body = 0, Head = 0, FistL = 0, FistR = 0, Sig = 0 }, textureId = 0 },
 	},
 	bags = { "Bag_t1_stub" },
 	hazards = { "Hazard_Log_stub" },
 	gloves = { model = "Gloves_stub", groups = { GloveL = 0, GloveR = 0 }, textureId = 0 }, -- M1-17: mirrors brickbrawl (textureId = the shared atlas)
-	clips = { jab3 = 0, bigThird = 0 },
-	clipsR6 = { jab3 = 0, bigThird = 0 },
+	clips = { jab3 = 0, bigThird = 0, flinch = 0, carryHold = 0, stealLift = 0, knockdown = 0, stun = 0 },
+	clipsR6 = { jab3 = 0, bigThird = 0, flinch = 0, carryHold = 0, stealLift = 0, knockdown = 0, stun = 0 },
 }

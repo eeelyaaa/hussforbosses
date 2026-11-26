@@ -1,103 +1,46 @@
 # Huss for Bosses: waiting on the manager
 
 The one place things wait for you. The build keeps going around every item. Short lines, exact steps.
-Groups: do first, set up, look at or listen to, questions, confirm, done. Updated at the M1 close (2026-11-25).
+Groups: do first, set up, look at or listen to, questions, confirm, done. Updated at the M2 close (2026-11-26).
 
 ## Do first (unblocks the most)
-1. **[MOVED TO THE TEAM, 2026-11-25: the manager said to create them by computer use; done at the start of M2]** Create the 10 passes and 9 developer products under the group's game and paste their ids here.
-   Creator Dashboard, switch to the group Huss for Bosses, Creations, Huss for Bosses, Monetization. Prices are
-   the brief's starting figures (system 13); prices are yours.
-   - Passes: Create a Pass, name, description, create; open it, Sales, switch on "Item for sale", set the price,
-     save. Until the ids are here the game runs on stand-ins and no purchase can be tested.
-
-     | Key | Pass | Price | Id |
-     |---|---|---|---|
-     | pass_auto_punch | Auto Punch | R$249 | |
-     | pass_perfect_auto_punch | Perfect Auto Punch | R$399 | |
-     | pass_2x_power | 2x Power | R$349 | |
-     | pass_2x_cash | 2x Cash | R$349 | |
-     | pass_fast_carry | Fast Carry | R$149 | |
-     | pass_long_lock | Long Lock | R$199 | |
-     | pass_extra_spots | Extra Spots | R$249 | |
-     | pass_quick_hands | Quick Hands | R$199 | |
-     | pass_iron_grip | Iron Grip | R$299 | |
-     | pass_starter_pack | Starter Pack | R$99 | |
-
-   - Developer Products: Create a Developer Product, name, price, save.
-
-     | Key | Product | Price | Id |
-     |---|---|---|---|
-     | product_cash_small | Small Cash Pack | R$29 | |
-     | product_cash_medium | Medium Cash Pack | R$79 | |
-     | product_cash_large | Large Cash Pack | R$199 | |
-     | product_cash_huge | Huge Cash Pack | R$399 | |
-     | product_spin_1 | Lucky Boss Spin x1 | R$49 | |
-     | product_spin_3 | Lucky Boss Spin x3 | R$129 | |
-     | product_spin_10 | Lucky Boss Spin x10 | R$399 | |
-     | product_instant_shield | Instant Shield | R$19 | |
-     | product_shield_breaker | Shield Breaker | R$39 | |
-
-   - The 19 icons are on UI kit board 04 and can be added at creation or later.
-2. **Save the place** (File, Save to Roblox, or Ctrl+S) when convenient. Since M0 the place holds the sync loader
-   (`ServerStorage.DevSync`), the place marker (`Workspace.HussForBosses = true`) and the synced scripts, and since M1
-   the built slice, the imported frog and gloves and the stud material. Without a save the team re-creates the loader
-   (one line, `team/CLAUDE.md`), but the hand-imported meshes would need re-importing, so save before closing Studio.
+1. **Save the place** (File, Save to Roblox, or Ctrl+S) before closing Studio. It holds the sync loader, the place marker, the imported meshes, the six bosses and the review line. The main session saved it at 03:42 on 2026-11-26; save again after any change you make.
 
 ## Set up
-3. **[MOVED TO THE TEAM, 2026-11-25: "do the majority of the set up yourself"]** **Set the server size to 8.** Creator Dashboard, the game, its place's settings, Maximum Visitors: 8
-   (`UNVERIFIED`: the exact page; the team names it when it asks).
-4. **[ANSWERED 2026-11-25: "for the future audio i say YES to everything. feel free to upload everything at m4"]** **Each future audio upload** needs the Audio Upload License Agreement ticked in the Creator Dashboard, which needs
-   your yes in chat; the yes at M1 covered its 8 files only (M4 uploads more).
+2. Nothing open. The 19 passes and products, server size 8, Studio computer use and the audio licence yes are done (see Done).
 
 ## Look at or listen to
-5. **Play the M1 strip** (optional, no gate; the team has checked the timing by numbers, only you can judge feel).
-   In Studio press Play, then:
-   - Walk to the bag pad on your plot (the red pad by the bag, near the spawn).
-   - The ring shows around the Huss button: tap the Huss button (or F, or click) as the ring lands. Do it a few times.
-   - To fight, you need Power 25 (about five bursts). Keep punching until the counter reads 25. (Setting Power by the
-     test hook is not possible from your side.)
-   - Walk out the plot entrance, down the track, through the zone 1 gate to the pad with Chomp Frog. The number over
-     it turns green when you are strong enough. Step into the ring and press Huss: the camera frames the frog.
-   - Tap as each ring lands; win by emptying its bar. Pick the frog up (the carry starts on its own), walk home past
-     the Rolling Log. If the log hits you the frog drops: walk back to it or press E to grab it.
-   - At your plot stand on a glowing spot and press E to place it, wait about 30 seconds, step on the cash pad to collect.
-   What to judge, in your words: the ring's speed (too fast or slow), the three pips filling, whether the huss sound lands
-   with the three jabs (the team can only match them to about 15 ms by numbers), the fight camera, and how the frog's bite
-   and flinches look. Nothing here gates the next milestone.
-6. **The first six bosses** (after M2), rendered beside their pictures. The other 30 are made after your yes.
-7. **Listen and pick.** Each sound family arrives as a listening page; answer with one letter per slot.
-7. **Audio permissions.** If an uploaded sound is silent in the game, open that sound's page in the Creator
-   Dashboard, Permissions, and add the experience. The team lists which.
-   M1-13 (2026-11-25): all eight ids load in Studio, but Studio plays under the account that owns the group, so it cannot show
-   whether the live experience is allowed to play them. If any is silent in a published test, add the experience to: HFB Burst
-   Voice F (127740860120528), HFB Single Huss 02A (133382295573645), HFB Single Huss 01A (87792871818595), HFB Standin Thud Bag1
-   1/2/3 (100565015513028, 108906304686894, 131000564218509), HFB Standin Swish (120181524699792), HFB Standin Perfect Sting
-   (92977560674627). Not known to be needed.
-8. **Higgsfield top-up**, only if the team reports the balance won't cover what is left.
+3. **(a) The boss review line: READY.** Press Play, step on the yellow "Boss review line" pad beside the hub spawn; you land 45 studs in front of the line. Each boss loops its 11 moves with a 1 s break and a "now playing" plate names the move, so you can say e.g. "Bit Shark, signature: too slow". The avatar clips are on an R15 and an R6 dummy at the end. The "Back to the game" pad returns you. Studio only; `studio/RemoveReviewLine.lua` removes it before any publish.
+4. **(b) The six bosses' sheet:** `team/verification/m2-six-bosses/m2_sheet_vs_picture.png` (our renders under the picture). Say yes, or what to fix per boss. The other 30 bosses wait for your yes. Our own review (`audits/m2-24-six-bosses-review.md`): the Star Golem reads stockier than the picture; your call (keep, or slim it).
+5. **(c) M2 playtest list** (on-screen items the team could not look at; hooks are set as Workspace attributes, list in `team/test-hooks.md`; `UNVERIFIED` until you say):
+   - **O1 fight camera and PERFECT float at phone size.** Test tab, Device, pick a phone (874 x 402, then 640 x 300). Play, set `HFB_SetPower` on Workspace to 25 or more, walk to the frog's ring (it patrols; stand in the ring), press Huss. Look: the avatar is not covering the boss, the camera frames the boss, "PERFECT" floats above the Huss button on a Perfect, an untimed tap dims the button.
+   - **O5 each boss in a fight.** Set `HFB_SetPower` to 100000, `HFB_SetZonesBeaten` to `1,2,3,4,5` and fight one boss per zone (zones 2 to 6: Snap Scorpion, Bit Shark, Frost Byte, Ember Drake, Star Golem). Look: wind-up, hits, defeat read at the camera and nothing clips the ground.
+   - **O6 labels and stud at phone size.** On a phone-size view, walk away from a pad: the pad number shrinks with distance (no constant-size label). Look at the stud ground at about 5, 40 and 100 studs: no flicker.
+   - **O7 two clients.** Test tab, Clients and Servers, 2 players, Start. Player 1: set `HFB_GrantBoss` to `chomp_frog` (carrying). Check: player 2 sees gloves and punches; player 2 steals the boss from your plot (the steal alert and BOUGHT tag on player 1 are only for bought bosses); owner punch drops the thief; the shield pushes a player out; the greyed "Can't be stolen" prompt; Break shield (set `HFB_SetCharges` to 1); Iron Grip stagger (`HFB_PassOwned` `pass_iron_grip=on`); then respawn (reset character) while carrying and see the boss returns.
+   - **O8 real input.** Press the Huss button by key (F), by touch (device emulator tap) and by gamepad (button R2). Each should punch.
+   - **Crate TAKE.** Set `HFB_GrantBoss` to `chomp_frog,to=crate`; stand at the crate, press E (keyboard), X (gamepad) or tap the prompt: the boss goes to your head.
+6. **Published-only checks** (real Robux purchases, web buyer, badges, two real phones) are in `team/verification/m2-18-robux.md`, "published game". Do them once the game is published; nothing to do now.
+7. **Listen and pick.** Each sound family arrives as a listening page at M4; answer with one letter per slot. If an uploaded sound is silent in a published test, add the experience to that sound's permissions (ids in `verification/m1-13-audio.md`).
+8. **Higgsfield top-up**, only if the team reports the balance will not cover what is left.
 
 ## Questions
-(none open; each one here would have a default the build is using, marked `PROVISIONAL` on the board)
+(the build uses each default and marks what rests on it `PROVISIONAL`)
+Q1. **Does a tap that is not timed cost a heart in a fight?** Default (PROVISIONAL): **no heart on green bosses (Easy, Fair), one heart from yellow up (Hard and above)**. Say "never" or "always" to change it. One setting either way.
+Q2. **Brief wording from the M1 measurements:** "about five bursts" to 25 Power and "about 4 to 5 seconds" for the first fight. Default: leave your wording and the numbers as they are.
+Q3. **P5, how far a boss walks:** default a short walk (14 studs each way); the real region length comes with the M3 world. Say if you want them to roam a whole zone room.
+Q4. **Cash comes in about 4 to 7 times the brief's income line from minute 10 on** (`verification/m2-26-curves.md`): minute 3 $3 to $6 a second (brief $5), minute 10 $91 to $188 ($80), minute 30 $3,000 to $5,500 ($800). Zone 3 comes at 15 to 16 minutes, not 11. Default (PROVISIONAL): **change nothing in the game**; the brief's income line becomes the measured ranges and we check again against real sessions. The other choices (a lower zone income table, or dearer upgrades from zone 2) change your tables, so they are your call.
 
 ## Confirm
-9. **[DONE 2026-11-25: committed and pushed to the game repo, concepts.figcraft via Git LFS]** **The pack's media is not backed up in any git repo in full.** The game repo commits the spec media (UI kit,
-   base-layout plans, the Brick Brawl concepts, your references, the huss recording) but ignores about 280 MB of
-   exploration (the four other look directions, game page concepts, layout renders): TEAM CALL M0-1. Those stay
-   on disk in `projects/huss-for-bosses/team/pack/` and `pitches/huss-for-bosses/` (ro-team doesn't track
-   `pitches/` either). If you want them kept somewhere, copy the folder to a backup drive; nothing in the build
-   needs them.
-10. **[You said to delete it; Claude Code's safety check blocked the delete again and needs your own approval. Run the line in the chat, or delete the folder in File Explorer]** **Delete a stray folder:** `C:/team/verification/m1-chomp-frog/` (4 duplicate renders written by a wrong path in
-    M1-03; the delete was blocked by a safety check). Harmless; remove it by hand when you like.
+9. **A stray folder:** `C:/team/verification/m1-chomp-frog/` (4 duplicate renders from a wrong path in M1-03). A safety check blocked the delete; remove it in File Explorer or approve the delete in chat. Harmless.
 
 ## Your notes for later milestones (2026-11-25, your words; not questions)
-- M3, the zones: "hopefully the map will have walls and stuff (the part with the different world types and monsters) ... with voxel style too some parts especially." You showed a reference: a long lane walled on both sides by high walls with voxel trees along the top, each zone a different ground colour in sequence down the lane, big mountains behind the walls. The base layout already makes the zone lanes walled corridors; the M3 builder brief carries this note and that look (`requirements/m2-carryover.md`).
-- M3/M4, the log: "I know log will be functional but it should look better." The M1 log is a plain cylinder stand-in; its real look (a voxel log in the style guide's look, with its warning) is M3/M4 work.
-- Workflow: if M1 works as intended you start the next milestone in a new chat, and give feedback at certain parts of the game.
+- M3, the zones: "hopefully the map will have walls and stuff (the part with the different world types and monsters) ... with voxel style too some parts especially." Reference: a long lane walled on both sides by high walls with voxel trees along the top, each zone a different ground colour in sequence, big mountains behind the walls. Carried in `requirements/m2-carryover.md`.
+- M3/M4, the log: "I know log will be functional but it should look better."
+- Workflow: you start the next milestone in a new chat after M2, and give feedback at certain parts of the game.
 
 ## Done
-- 2026-11-25, M0: the open place is the group's (CreatorType Group, 432262304) and saving works in Studio
-  (DataStore write and read passed). `verification/m0-setup.md`.
-- 2026-11-25, M1: **the stud proof** answered, "B on both" (applied: `MaterialService.Stud` uses the flipped normal).
-  Sheet: `team/verification/m1-stud/stud-proof-sheet.png`.
-- 2026-11-25, M1: the two Studio-window steps (publish the 4 avatar clips under the group, import Chomp Frog and the
-  gloves) were done by the main session with your go-ahead ("yes, you can use computer access for those two"); ids in `assets.md`.
-- 2026-11-25, M1: your yes in chat for the Audio Upload License Agreement on the 8 M1 audio files; uploaded, all load.
+- 2026-11-25, M0: the open place is the group's (432262304) and saving works.
+- 2026-11-25, M1: stud proof answered "B on both" (applied); gloves and frog imported and the 4 clips published; audio licence yes for the 8 M1 files; you said yes to everything for future audio (upload at M4).
+- 2026-11-25 (M2-00): all 10 passes and 9 developer products created and on sale, ids in `assets.md`; Maximum Visitor Count 8. Icons not added yet.
+- 2026-11-25: the pack's media is committed to the game repo (concepts.figcraft via Git LFS).
+- 2026-11-26: Studio computer use approved; five bosses imported; 10 avatar clips published; the review line built.

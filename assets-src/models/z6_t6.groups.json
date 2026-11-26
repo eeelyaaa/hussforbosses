@@ -1,0 +1,294 @@
+{
+ "id": "z6_t6",
+ "cube": 0.4,
+ "cubes": 9304,
+ "bbox_cubes": [
+  -20,
+  -11,
+  0,
+  20,
+  9,
+  41
+ ],
+ "tris_atlas": 14020,
+ "meshes_atlas": [
+  [
+   "Body",
+   8296
+  ],
+  [
+   "Head",
+   1588
+  ],
+  [
+   "FistL",
+   1564
+  ],
+  [
+   "FistR",
+   1564
+  ],
+  [
+   "Sig",
+   1008
+  ]
+ ],
+ "tris_perrole": 14020,
+ "meshes_perrole": [
+  [
+   "Body_white",
+   16
+  ],
+  [
+   "Body_mouth",
+   64
+  ],
+  [
+   "Body_pink",
+   32
+  ],
+  [
+   "Body_p1",
+   2110
+  ],
+  [
+   "Body_p2",
+   642
+  ],
+  [
+   "Body_p3",
+   692
+  ],
+  [
+   "Body_gold",
+   1568
+  ],
+  [
+   "Body_gold2",
+   1232
+  ],
+  [
+   "Body_gold3",
+   1510
+  ],
+  [
+   "Body_star",
+   402
+  ],
+  [
+   "Body_core",
+   4
+  ],
+  [
+   "Body_starw",
+   24
+  ],
+  [
+   "Head_white",
+   16
+  ],
+  [
+   "Head_mouth",
+   64
+  ],
+  [
+   "Head_pink",
+   40
+  ],
+  [
+   "Head_p1",
+   656
+  ],
+  [
+   "Head_p2",
+   302
+  ],
+  [
+   "Head_p3",
+   226
+  ],
+  [
+   "Head_p4",
+   200
+  ],
+  [
+   "Head_star",
+   84
+  ],
+  [
+   "FistL_p1",
+   780
+  ],
+  [
+   "FistL_p2",
+   258
+  ],
+  [
+   "FistL_p3",
+   268
+  ],
+  [
+   "FistL_p4",
+   78
+  ],
+  [
+   "FistL_gold",
+   64
+  ],
+  [
+   "FistL_gold2",
+   46
+  ],
+  [
+   "FistL_gold3",
+   54
+  ],
+  [
+   "FistL_star",
+   16
+  ],
+  [
+   "FistR_p1",
+   782
+  ],
+  [
+   "FistR_p2",
+   258
+  ],
+  [
+   "FistR_p3",
+   270
+  ],
+  [
+   "FistR_p4",
+   78
+  ],
+  [
+   "FistR_gold",
+   64
+  ],
+  [
+   "FistR_gold2",
+   46
+  ],
+  [
+   "FistR_gold3",
+   54
+  ],
+  [
+   "FistR_star",
+   12
+  ],
+  [
+   "Sig_gold",
+   354
+  ],
+  [
+   "Sig_gold2",
+   354
+  ],
+  [
+   "Sig_gold3",
+   300
+  ]
+ ],
+ "tris_atlas_no_seam_faces": 11740,
+ "tris_perrole_greedy_merged_count_only": 9390,
+ "size_studs_blender_xyz": [
+  16.0,
+  8.0,
+  16.4
+ ],
+ "size_studs_roblox_xyz": [
+  16.0,
+  16.4,
+  8.0
+ ],
+ "groups": {
+  "Body": {
+   "pivot_cubes_blender": [
+    0,
+    0,
+    0
+   ],
+   "pivot_studs_blender": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "pivot_studs_roblox_offset_from_model_pivot": [
+    -0.0,
+    0.0,
+    0.0
+   ]
+  },
+  "Head": {
+   "pivot_cubes_blender": [
+    0,
+    0,
+    25
+   ],
+   "pivot_studs_blender": [
+    0.0,
+    0.0,
+    10.0
+   ],
+   "pivot_studs_roblox_offset_from_model_pivot": [
+    -0.0,
+    10.0,
+    0.0
+   ]
+  },
+  "FistL": {
+   "pivot_cubes_blender": [
+    12,
+    0,
+    21
+   ],
+   "pivot_studs_blender": [
+    4.8,
+    0.0,
+    8.4
+   ],
+   "pivot_studs_roblox_offset_from_model_pivot": [
+    -4.8,
+    8.4,
+    0.0
+   ]
+  },
+  "FistR": {
+   "pivot_cubes_blender": [
+    -12,
+    0,
+    21
+   ],
+   "pivot_studs_blender": [
+    -4.8,
+    0.0,
+    8.4
+   ],
+   "pivot_studs_roblox_offset_from_model_pivot": [
+    4.8,
+    8.4,
+    0.0
+   ]
+  },
+  "Sig": {
+   "pivot_cubes_blender": [
+    0,
+    0,
+    39
+   ],
+   "pivot_studs_blender": [
+    0.0,
+    0.0,
+    15.6
+   ],
+   "pivot_studs_roblox_offset_from_model_pivot": [
+    -0.0,
+    15.6,
+    0.0
+   ]
+  }
+ }
+}

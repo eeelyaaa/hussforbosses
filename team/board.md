@@ -12,4 +12,5 @@ statuses are in `board-archive.md`. Quality passes done: Function only (by plan)
 `requirements/m2-carryover.md`. Nothing is `BLOCKED: manager` or `PROVISIONAL`; the manager's optional steps are in
 `manager-todo.md`.
 
-## M2: not planned yet (the manager starts it in a new chat)
+## M2: closed (2026-11-26)
+M2 closed: the gate passes 27/27 scripted rows (`verification/m2-gate.md`). On screen, O2, O3, O4 and the review line PASS; O1, O5, O6, O7, O8 and the crate TAKE are `UNVERIFIED` and listed in `manager-todo.md` as the M2 playtest. Rows and final statuses are in `board-archive.md`. Quality pass done: Function only (by plan). Follow-ups: `requirements/m2-carryover.md`. PROVISIONAL: Q1 to Q4 in `manager-todo.md`. The next milestone (M3, the world) is planned when the manager has reviewed M2.

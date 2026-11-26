@@ -18,7 +18,7 @@ local ctx = L.begin("NoDelay", ARGS)
 local p = ctx.p
 local ringPart = workspace.Zones.Z1.Pads.Fixed.Ring
 local DURATION = tonumber(ARGS.seconds) or 45
-local POWER = 20 -- r = 1.25 (hard, 80/30 ms: AutoTap's +70 ms tap is still Good); a win takes 4 Good bursts
+local POWER = 20 -- r = 1.25 (hard, M2 100/40 ms: AutoTap's +70 ms tap is Good); a win takes 4 Good bursts
 L.rootY(ctx)
 
 local ok, err = xpcall(function()
@@ -45,12 +45,15 @@ local ok, err = xpcall(function()
 			local why = Fight.canStart(p, "z1_fixed")
 			if why == "ring" or why == nil then
 				Session.set(p, "power", POWER)
-				L.tp(ctx, L.onPart(ctx, ringPart, 1, 1))
+				L.tp(ctx, L.nearBoss(ctx, "z1_fixed", ringPart)) -- next to where the boss patrols now (M2-28)
 			end
 		end
 		task.wait(0.25)
 	end
 	workspace:SetAttribute("HFB_AutoTap", nil)
+	-- M2-06: a fight still running here would lose by misses during the flush wait and its lastHeart report would
+	-- land after the count (seen 2026-11-25, run 2); end it now so the counts cover the same fights.
+	if Fight.get(p) then Fight.finish(p, Fight.get(p), "run") end
 	task.wait(3.2) -- the last ring and moves reports (M1-20: probe flushes 14 a second, give it time)
 	for i = flog0 + 1, #Fight.stats.log do
 		local e = Fight.stats.log[i]

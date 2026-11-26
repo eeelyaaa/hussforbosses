@@ -123,8 +123,13 @@ for _, step in ipairs({
 end
 TestClient.setProbes(CarryCtl, BaseCtl, HazardsCtl, PadsCtl)
 
--- The Huss action: in a boss ring with no fight it starts the fight; otherwise it is a ring tap.
+-- The Huss action: next to a thief carrying your boss it punches the thief (M2-16, Controllers/Steal); in a boss ring with
+-- no fight it starts the fight; otherwise it is a ring tap.
+local StealCtl = optional(Controllers, "Steal")
 Input.onPunch(function(source: string, t: number)
+	if not Fight.active() and StealCtl.tryPunch(source, t) then
+		return
+	end
 	if not Fight.active() and Fight.inStartRing() then
 		Fight.requestStart()
 	else
@@ -141,7 +146,7 @@ end)
 -- The Huss button's job follows where the player stands (docs/controls.md).
 local mode = nil
 RunService.Heartbeat:Connect(function()
-	local m = if Fight.active() then "fight" elseif Fight.inStartRing() then "start" elseif Ring.onBagPad() then "bag" else "hidden"
+	local m = if Fight.active() then "fight" elseif StealCtl.thiefInRange() then "start" elseif Fight.inStartRing() then "start" elseif Ring.onBagPad() then "bag" else "hidden"
 	if m ~= mode then
 		mode = m
 		views.HussButton.setMode(m)
@@ -168,6 +173,33 @@ BurstClock.onBeat(function(ev)
 	end
 end)
 
+-- M2-07 (P3): an untimed tap is ONE punch. Ring calls this in the tap's frame: the single huss (02 A / 01 A
+-- alternating), one jab (the first punch of the jab clip, cut before the second), and on the bag the Power pop
+-- (display only: the server's number arrives in Profile.Changed). In a fight the boss's hit reaction is Fight.lua's.
+local singleGen = 0
+Ring.setSinglePunch(function(context: string, t: number)
+	if not rawget(Audio, "_null") and type(Audio.singleHuss) == "function" then
+		pcall(Audio.singleHuss)
+	end
+	if not rawget(Avatar, "_null") and type(Avatar.startJab) == "function" then
+		singleGen += 1
+		local gen = singleGen
+		local ok = pcall(Avatar.startJab, "good", t)
+		if ok then
+			-- the clip's second punch begins at BEAT[2]; stop just before it (a new burst can not start for 0.6 s)
+			task.delay(Config.Punch.BEAT[2] - 0.015, function()
+				if gen == singleGen and not BurstClock.running() then
+					pcall(Avatar.cancel)
+				end
+			end)
+		end
+	end
+	if context == "bag" then
+		local P = Config.Punch
+		views.Counters.popPower(Config.Bag.STRENGTH_VALUE(strengthLevel) * (P.GRADE_VALUE.untimed or 1), false)
+	end
+end)
+
 Net.get("Profile", "Changed").OnClientEvent:Connect(function(p)
 	if typeof(p) ~= "table" then
 		return
@@ -182,6 +214,41 @@ Net.get("Profile", "Changed").OnClientEvent:Connect(function(p)
 		strengthLevel = p.strengthLevel
 	end
 end)
+
+-- M2-01 seam (m2-contract.md section A): a module ADDED at M2 or later in Controllers/ or Ui/ that sets
+-- AUTO_START = true gets start(ctx) once, in name order, after everything above, so a new screen or controller needs
+-- no edit here. The M1 modules below are never auto-started (they are wired above by hand).
+local M1_MODULES = {
+	Audio = true, Avatar = true, Base = true, BossMoves = true, BossVisuals = true, BurstClock = true, Carry = true,
+	Clock = true, Fight = true, Hazards = true, Input = true, Pads = true, Ring = true, TestClient = true,
+	Counters = true, FightOverlay = true, Hud = true, HussButton = true, Kit = true, Prompts = true, WorldLabel = true,
+}
+local ctx = { views = views, Hud = Hud, Input = Input, Ring = Ring, Fight = Fight, BurstClock = BurstClock,
+	Avatar = Avatar, BossMoves = BossMoves, Audio = Audio, Carry = CarryCtl, Base = BaseCtl, Pads = PadsCtl, Clock = Clock }
+local autoList = {}
+for _, folder in ipairs({ Controllers, UiFolder }) do
+	if folder then
+		for _, m in ipairs(folder:GetChildren()) do
+			if m:IsA("ModuleScript") and not M1_MODULES[m.Name] then
+				table.insert(autoList, m)
+			end
+		end
+	end
+end
+table.sort(autoList, function(a, b)
+	return a.Name < b.Name
+end)
+for _, m in ipairs(autoList) do
+	local ok, err = pcall(function()
+		local mod = require(m) :: any
+		if type(mod) == "table" and mod.AUTO_START == true and type(mod.start) == "function" then
+			mod.start(ctx)
+		end
+	end)
+	if not ok then
+		warn(("[HFB] client: %s failed to start: %s"):format(m.Name, tostring(err)))
+	end
+end
 
 if #missing > 0 then
 	print("[HFB] client: not there yet, running as no-ops: " .. table.concat(missing, ", "))

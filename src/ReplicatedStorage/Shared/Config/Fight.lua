@@ -10,7 +10,7 @@ Fight.FIXED_BACK_S = 10 -- after a win the fixed pad is back for that player in 
 Fight.RING_SLACK = 2 -- Fight.Start: inside the pad's RingRadius + 2 studs
 Fight.RING_RETRY_S = 0.25 -- TEAM CALL M1-26b: a press while walking in can reach the server before the character
 -- does (refused "ring"); the client asks once more after this long if it is still in the ring
-Fight.STALL_SLACK_S = 0.5 -- TEAM CALL M1-P4: no report by RING[level] + 0.5 s after a landing = one Miss
+Fight.STALL_SLACK_S = 0.5 -- TEAM CALL M1-P4: no report by RING[level] + 0.5 s after a landing = one Miss (kept at M2)
 
 -- The fight camera (TEAM CALL M1-26): the boss is the subject. The eye sits on the boss-to-player line turned
 -- SIDE_DEG to one side and raised ELEV_DEG, then the distance is solved so the boss's whole bounding box (8 corners,
@@ -40,14 +40,37 @@ Fight.SPOT = {
 
 -- Difficulty bands by r = boss Power / player Power, read at fight start (brief system 4 table), in order.
 -- A fight uses the first band whose maxRatio >= r. Windows in ms either side of the landing.
+-- M2 (the manager's P2; m2-punch-numbers.md section 1): every window wider, no Good window under 55 ms.
 Fight.BANDS = {
-	{ id = "easy", maxRatio = 0.5, goodMs = 130, perfectMs = 55 },
-	{ id = "fair", maxRatio = 1.0, goodMs = 110, perfectMs = 45 },
-	{ id = "hard", maxRatio = 1.5, goodMs = 80, perfectMs = 30 },
-	{ id = "veryHard", maxRatio = 2.0, goodMs = 60, perfectMs = 22 },
-	{ id = "brutal", maxRatio = 3.0, goodMs = 45, perfectMs = 16 },
-	{ id = "impossible", maxRatio = math.huge, goodMs = 35, perfectMs = 12 },
+	{ id = "easy", maxRatio = 0.5, goodMs = 150, perfectMs = 65 },
+	{ id = "fair", maxRatio = 1.0, goodMs = 130, perfectMs = 55 },
+	{ id = "hard", maxRatio = 1.5, goodMs = 100, perfectMs = 40 },
+	{ id = "veryHard", maxRatio = 2.0, goodMs = 80, perfectMs = 30 },
+	{ id = "brutal", maxRatio = 3.0, goodMs = 65, perfectMs = 24 },
+	{ id = "impossible", maxRatio = math.huge, goodMs = 55, perfectMs = 20 },
 }
+
+-- PROVISIONAL (manager-todo Q1, TEAM CALL M2-03-6): an untimed tap in this band or any later one costs a heart (the
+-- boss's attack plays after the punch); bands before it cost none. nil = never a heart; "easy" = always.
+Fight.UNTIMED_HEART_FROM = "hard"
+
+-- True when an untimed tap in this band costs a heart (UNTIMED_HEART_FROM and every band after it).
+function Fight.untimedCostsHeart(bandId: string): boolean
+	local from = Fight.UNTIMED_HEART_FROM
+	if from == nil then
+		return false
+	end
+	local iFrom, iBand
+	for i, b in ipairs(Fight.BANDS) do
+		if b.id == from then
+			iFrom = i
+		end
+		if b.id == bandId then
+			iBand = i
+		end
+	end
+	return iFrom ~= nil and iBand ~= nil and iBand >= iFrom
+end
 
 -- The band for a ratio (both sides use this; the client colours pad numbers with it).
 function Fight.band(ratio: number): { id: string, maxRatio: number, goodMs: number, perfectMs: number }

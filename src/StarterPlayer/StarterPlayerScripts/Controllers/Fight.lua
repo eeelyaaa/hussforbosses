@@ -110,7 +110,11 @@ function Fight.inStartRing(): string?
 		local ring = pad:FindFirstChild("Ring")
 		local radius = ring and ring:GetAttribute("RingRadius")
 		if ring and ring:IsA("BasePart") and typeof(radius) == "number" then
-			local d = root.Position - ring.Position
+			-- M2-07: the boss patrols (Shared/Patrol, up to 14 studs from the ring), and the server tests Fight.Start against where
+			-- the boss is now, so the client measures from the pad boss's live position too (the ring centre when it has none).
+			local boss = bossOf(pad)
+			local centre = if boss then boss:GetBoundingBox().Position else ring.Position
+			local d = root.Position - centre
 			if Vector2.new(d.X, d.Z).Magnitude <= radius then
 				local id = pad:GetAttribute("PadId")
 				if typeof(id) == "string" then
@@ -177,7 +181,7 @@ end
 
 -- The camera CFrame that frames the whole boss (M1-26, Config.Fight.CAMERA). Pure: reads the boss's bounding box and H,
 -- the player's position and the camera's FOV and viewport; moves nothing.
-function Fight.frameBoss(boss: Model, playerPos: Vector3, cam: Camera): CFrame
+local function frameAt(boss: Model, playerPos: Vector3, cam: Camera, sideDeg: number): CFrame
 	local C = Config.Fight.CAMERA
 	local bbCf, bbSize = boss:GetBoundingBox()
 	local h = boss:GetAttribute("H")
@@ -185,7 +189,7 @@ function Fight.frameBoss(boss: Model, playerPos: Vector3, cam: Camera): CFrame
 	local center = bbCf.Position
 	local toPlayer = Vector3.new(playerPos.X - center.X, 0, playerPos.Z - center.Z)
 	toPlayer = if toPlayer.Magnitude > 0.01 then toPlayer.Unit else Vector3.new(0, 0, 1)
-	local yawed = CFrame.Angles(0, math.rad(C.SIDE_DEG), 0) * toPlayer
+	local yawed = CFrame.Angles(0, math.rad(sideDeg), 0) * toPlayer
 	local elev = math.rad(C.ELEV_DEG)
 	local dir = (yawed * math.cos(elev) + Vector3.new(0, math.sin(elev), 0)).Unit
 	local vp = cam.ViewportSize
@@ -235,6 +239,56 @@ function Fight.frameBoss(boss: Model, playerPos: Vector3, cam: Camera): CFrame
 			hi, best = mid, cf
 		else
 			lo = mid
+		end
+	end
+	return best
+end
+
+-- M2-07: the fight spot can leave the avatar closer than usual (a wall behind the boss, the patrol near the pad's edge), and
+-- then the usual side angle puts it over the boss. Start at SIDE_DEG and turn further round (SIDE_STEP at a time, to SIDE_MAX)
+-- until the avatar (a box about the player's root) covers no more than AVOID_OVERLAP of the boss's screen box; else the
+-- least covering side wins. Pure like frameAt.
+function Fight.frameBoss(boss: Model, playerPos: Vector3, cam: Camera): CFrame
+	local C = Config.Fight.CAMERA
+	local first = frameAt(boss, playerPos, cam, C.SIDE_DEG)
+	if not C.AVOID_OVERLAP then
+		return first
+	end
+	local bbCf, bbSize = boss:GetBoundingBox()
+	local vp = cam.ViewportSize
+	local tanV = math.tan(math.rad(cam.FieldOfView) / 2)
+	local tanH = tanV * (vp.X / math.max(vp.Y, 1))
+	local function rect(cf: CFrame, centre: CFrame, size: Vector3): (number, number, number, number)
+		local minU, minV, maxU, maxV = math.huge, math.huge, -math.huge, -math.huge
+		for _, sx in { -0.5, 0.5 } do
+			for _, sy in { -0.5, 0.5 } do
+				for _, sz in { -0.5, 0.5 } do
+					local l = cf:PointToObjectSpace((centre * CFrame.new(size.X * sx, size.Y * sy, size.Z * sz)).Position)
+					local depth = math.max(-l.Z, 0.1)
+					local u = 0.5 + l.X / (depth * tanH) / 2
+					local v = 0.5 - l.Y / (depth * tanV) / 2
+					minU, maxU, minV, maxV = math.min(minU, u), math.max(maxU, u), math.min(minV, v), math.max(maxV, v)
+				end
+			end
+		end
+		return minU, minV, maxU, maxV
+	end
+	local avatarBox = CFrame.new(playerPos.X, playerPos.Y - 0.25, playerPos.Z)
+	local function overlap(cf: CFrame): number
+		local bu0, bv0, bu1, bv1 = rect(cf, bbCf, bbSize)
+		local au0, av0, au1, av1 = rect(cf, avatarBox, Vector3.new(2.4, 5.5, 2.4))
+		local w = math.min(bu1, au1) - math.max(bu0, au0)
+		local h = math.min(bv1, av1) - math.max(bv0, av0)
+		return if w > 0 and h > 0 then w * h / math.max((bu1 - bu0) * (bv1 - bv0), 1e-6) else 0
+	end
+	local best, bestOv = first, overlap(first)
+	local side = C.SIDE_DEG
+	while bestOv > C.AVOID_OVERLAP and side + C.SIDE_STEP <= C.SIDE_MAX do
+		side += C.SIDE_STEP
+		local cf = frameAt(boss, playerPos, cam, side)
+		local ov = overlap(cf)
+		if ov < bestOv then
+			best, bestOv = cf, ov
 		end
 	end
 	return best
@@ -335,8 +389,15 @@ local function onState(p: any)
 	end
 	local boss = current.boss
 	if p.state == "win" then
+		-- ONE defeat per win (M2-07; it was played twice in the same frame, m1-sync-test.md finding 1). The carry
+		-- controller plays it, with the hop onto the head, when the server's carrying state arrives (the same frame or
+		-- the next); if nothing has started one by then (no hop target), it plays here.
 		if boss then
-			call(moves, "play", boss, "defeat", {})
+			task.delay(0.3, function()
+				if boss.Parent and not (moves and type(moves.isPlaying) == "function" and moves.isPlaying(boss, "defeat")) then
+					call(moves, "play", boss, "defeat", {})
+				end
+			end)
 		end
 		endFight("win")
 	elseif p.state == "loss" then
@@ -417,6 +478,19 @@ local function onClientBeat(ev: any)
 	end })
 end
 
+-- An untimed single punch in a fight (M2-07, P3): the boss takes one hit (the server's Beat size 'single' moves the health).
+Ring.onEvent(function(kind: string, data: any)
+	local f = current
+	if kind == "graded" and data.grade == "untimed" and f and f.boss then
+		local boss = f.boss
+		call(moves, "play", boss, "hitGood", { perfect = false, onDone = function()
+			if current == f then
+				call(moves, "loop", boss, "guard")
+			end
+		end })
+	end
+end)
+
 local function updatePrompt()
 	local inRing = Fight.inStartRing() ~= nil
 	if inRing and not promptShown then
@@ -464,6 +538,17 @@ function Fight.init(v: any, deps: any?)
 	task.defer(idleAll)
 	CollectionService:GetInstanceAddedSignal("HFB_BossPad"):Connect(function(pad)
 		task.defer(playIdle, bossOf(pad))
+	end)
+	-- M2-34 streaming: the pad's boss can arrive after the pad (or stream back in): idle it when it shows up
+	CollectionService:GetInstanceAddedSignal("HFB_Boss"):Connect(function(boss)
+		if boss:IsA("Model") and not boss:GetAttribute("PadBoss") then
+			for _, pad in ipairs(pads()) do
+				if boss:IsDescendantOf(pad) then
+					task.defer(playIdle, boss)
+					return
+				end
+			end
+		end
 	end)
 	Players.LocalPlayer.CharacterAdded:Connect(function()
 		if current then

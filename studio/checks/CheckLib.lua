@@ -23,6 +23,8 @@ L.Hazards = require(SSS.Systems.Hazards)
 L.Base = require(SSS.Systems.Base)
 L.Income = require(SSS.Systems.Income)
 L.Session = require(SSS.Data.Session)
+L.Shop = require(SSS.Systems.Shop)
+L.Ids = require(ReplicatedStorage.Shared.Ids)
 
 local C2S = { { "Punch", "Report" }, { "Fight", "Start" }, { "Fight", "Run" }, { "Carry", "Grab" }, { "Base", "Place" }, { "Profile", "TestReport" } }
 L.C2S = C2S
@@ -49,8 +51,13 @@ function L.begin(name, args)
 			table.insert(ctx.errs, m)
 		end
 	end))
+	-- M2-28: in a gate run several checks share one play session; what an earlier check logged (expected refusals) is not "before this
+	-- check": GateRun sets _G.HFB_GATE_LOG_FROM (os.time) when it starts each call after the first
+	local logFrom = _G.HFB_GATE_LOG_FROM or 0
 	for _, e in ipairs(LogService:GetLogHistory()) do
-		if e.messageType == Enum.MessageType.MessageError then
+		if e.timestamp < logFrom then
+			-- skipped
+		elseif e.messageType == Enum.MessageType.MessageError then
 			table.insert(ctx.errs, "before the check: " .. e.message)
 		elseif e.messageType == Enum.MessageType.MessageWarning and e.message:find("[HFB]", 1, true) and not e.message:find("TestReport", 1, true) then
 			table.insert(ctx.errs, "before the check: " .. e.message)
@@ -64,6 +71,10 @@ function L.begin(name, args)
 	ctx.char = p.Character or p.CharacterAdded:Wait()
 	ctx.hrp = ctx.char:WaitForChild("HumanoidRootPart")
 	ctx.hum = ctx.char:WaitForChild("Humanoid")
+	-- M2-28: the profile loads from the data layer a few seconds after the join (M2-09); a check that runs first in a fresh play
+	-- session must not read it before it is live
+	local tl = os.clock()
+	while L.Session.state(p) ~= "live" and os.clock() - tl < 30 do task.wait(0.1) end
 	-- every Profile.TestReport the real client sends, in order
 	table.insert(ctx.conns, L.Net.get("Profile", "TestReport").OnServerEvent:Connect(function(pl, payload)
 		if pl ~= p or type(payload) ~= "table" or type(payload.name) ~= "string" or type(payload.json) ~= "string" then return end
@@ -87,8 +98,43 @@ function L.begin(name, args)
 		local exp = ctx.expect or (os.clock() - (ctx.stateHookAt or -math.huge) < 0.5 and "hook") or nil
 		table.insert(ctx.ledger, { key = key, value = value, at = os.clock(), beatN = #L.Punch.stats.log, collectN = #L.Income.stats.collects, placedN = #L.Base.stats.placed, expect = exp })
 	end)
+	-- M2-28: the Studio account owns every pass for real, and Shop.prompt would open a real purchase dialog: every
+	-- check starts with all ten passes forced off (PassOwned) and the prompt stubbed (restored in L.finish). A check
+	-- that needs a pass sets its own PassOwned after this; one that records prompts replaces the stub.
+	L.passesOff(ctx)
+	ctx.prompts = {}
+	L.Shop.setPromptFn(function(pl, kind, id) table.insert(ctx.prompts, { userId = pl.UserId, kind = kind, id = id }) end)
 	print(("CHECK %s start: player %d, skin %s"):format(ctx.tag, p.UserId, tostring(require(ReplicatedStorage.Shared.Skin).Id)))
 	return ctx
+end
+
+-- every pass key off (or what extra says: { pass_x = "on" }); the answer reaches the server's pass cache at once
+function L.passesOff(ctx, extra)
+	local parts = {}
+	for _, k in ipairs(L.Ids.SHOP_KEYS) do
+		if L.Ids.isPass(k) then table.insert(parts, k .. "=" .. ((extra and extra[k]) or "off")) end
+	end
+	L.hook(ctx, "PassOwned", table.concat(parts, ","))
+	task.wait(0.1)
+end
+
+-- M2-28: where to stand for a fight against the pad's boss as it patrols (up to 14 studs from the pad centre): inside the ring (what the
+-- real client's Huss press tests: RingRadius round the ring centre) and within the server's start range of the boss NOW (RingRadius + 2
+-- + 1.5 round the boss), as near to the boss as the ring allows but not nearer than 3 studs.
+function L.nearBoss(ctx, padId, ringPart)
+	padId = padId or "z1_fixed"
+	local pad = L.Zones.pad(padId)
+	local ring = ringPart or (pad and pad.ring) or workspace.Zones.Z1.Pads.Fixed.Ring
+	local bp = pad and pad.anchor and L.Zones.bossPosition(padId, L.Zones.now()) or nil
+	if not bp then return L.onPart(ctx, ring, 1, 1) end
+	local top = ring.Position.Y + ring.Size.Y / 2 + L.rootY(ctx)
+	local radius = ring:GetAttribute("RingRadius") or (pad and pad.radius) or 10
+	local d = Vector3.new(bp.X - ring.Position.X, 0, bp.Z - ring.Position.Z)
+	if d.Magnitude < 3.01 then
+		return Vector3.new(bp.X, top, bp.Z) + pad.anchor.LookVector * 3
+	end
+	local reach = math.min(d.Magnitude - 3, radius - 1)
+	return Vector3.new(ring.Position.X, top, ring.Position.Z) + d.Unit * reach
 end
 
 function L.check(ctx, label, ok, detail)
@@ -275,6 +321,7 @@ function L.finish(ctx)
 	ctx.muted = false
 	if ctx.muteConn then ctx.muteConn:Disconnect(); ctx.muteConn = nil end
 	task.wait(0.2)
+	L.Shop.setPromptFn(nil) -- Roblox's dialog again (M2-28: every check stubbed it from L.begin)
 	L.check(ctx, "no errors and no [HFB] warnings in the server output", #ctx.errs == 0, #ctx.errs > 0 and table.concat(ctx.errs, " || "):sub(1, 900) or nil)
 	for name in pairs(ctx.hooks) do workspace:SetAttribute("HFB_" .. name, nil) end
 	for _, n in ipairs({ "AutoTap", "AutoMix", "AutoInteract", "ReportBeats", "FrameCap", "ForceInput", "LogForce", "ClockOffset", "PadFastBack" }) do

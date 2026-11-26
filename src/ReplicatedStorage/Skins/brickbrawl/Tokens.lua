@@ -109,6 +109,16 @@ return {
 		pipOutlinePx = 2,
 		pipPopScale = 1.25, -- a pip's pop; the third is pipBigPopScale
 		pipBigPopScale = 1.4,
+		-- M2-08: PERFECT floats above the Huss button; an untimed single is the small pop (manager P3)
+		perfectRisePx = 44, -- how far PERFECT rises, design px
+		spentFill = 0.6, -- the button's fill x this while the ring is spent
+		spentTextAlpha = 0.35, -- its label's transparency then
+		perfectDriftPx = 36, -- and how far it drifts right while rising
+		perfectFloatS = 0.85, -- how long it floats, seconds
+		perfectFadeFrom = 0.55, -- the fade starts at this share of the float
+		perfectPopScale = 1.35, -- its pop on appearing
+		untimedPopScale = 1.08, -- the button's squash on an untimed single
+		untimedStarScale = 0.75, -- the star behind it (a timed one reaches 1.15)
 		counterH = 32, -- counter plates
 		counterIconPx = 36,
 		counterIconOverlapPx = 8,
@@ -134,6 +144,7 @@ return {
 		worldNormalMapId = 106077758301166,
 		worldNormalMapFlippedId = 95643445290942, -- green inverted; the proof picks one (M1-12)
 		worldRoughMapId = 106124900748892,
+		worldColorBakedMapId = 134322499090979, -- M2-04 (decal 95970853589864, uploaded 2026-11-25): stud shading baked into the colour map; 0 until uploaded (assets-src/stud/stud-color-baked-256.png), SetupStud then uses it
 		studsPerTile = 4,
 		variantName = "Stud",
 		normalFlip = true, -- the manager chose B (flipped) for walls and ground, 2026-11-25

@@ -1,4 +1,6 @@
 if workspace:GetAttribute("HussForBosses") ~= true then error("PLACE-GUARD: not the Huss for Bosses place; refusing to run", 0) end
+-- M2-28: the M2 gate runs every check, the M1 ones included (row S27), through studio/checks/Gate.lua (one driver, one play runner,
+-- a per-row PASS / FAIL / UNVERIFIED summary). This M1 driver still works on its own.
 -- M1-16: CheckAll, the M1 gate's driver (team/requirements/m1-core-loop-gate.md, "CheckAll.lua").
 -- Order: CheckSync -> CheckSkin parts 1 and 2 -> CoreLoop -> Refusals -> BurstValues -> NoDelay; one summary table
 -- (saved by the runner to team/verification/m1-checkall.md).

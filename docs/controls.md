@@ -26,3 +26,27 @@ thumb on the smallest phone; it stays clear of Roblox's jump button and top bar.
 
 Built in `src/StarterPlayer/StarterPlayerScripts/Controllers/Input` (M1 for punch, interact and run; the rest with
 their systems). A binding is done when it works on keyboard and mouse, gamepad and touch.
+
+## What each action sends (M2-01, `team/requirements/m2-contract.md` section C)
+The client only asks; the server decides (`Shared/Net.lua` has every payload). Bindings are added to
+`Controllers/Input` by its owner (M2-07 in batch 2: `shop`, `rebirth`, `settings`, `shield`, `sell`, `run`,
+`menu` actions next to `punch` and `interact`); screens and controllers subscribe to the action, they never read
+keys themselves.
+
+| Action | Remote |
+|---|---|
+| Punch on the bag or in a fight | `Punch.Report` (grade `perfect` / `good` / `untimed` / `miss`) |
+| Punch in a boss ring with no fight | `Fight.Start` |
+| Punch a thief carrying your boss | `Steal.OwnerPunch` |
+| Run from a fight | `Fight.Run` |
+| Place / pick up / swap / sell / take from the crate | `Base.Place` / `Base.PickUp` / `Base.Swap` / `Base.Sell` / `Base.TakeCrate` |
+| Grab a dropped boss | `Carry.Grab` |
+| Upgrade a boss (boss panel) | `Boss.Upgrade` |
+| Buy Strength / Speed, Auto Punch toggles (bag panel) | `Bag.BuyStrength` / `Bag.BuySpeed` / `Bag.AutoToggle` / `Bag.PerfectToggle` |
+| Steal (hold) / let go | `Steal.HoldStart` / `Steal.HoldCancel` (release or moving away) |
+| Raise the shield (Q / Y / button; the pad needs no remote) | `Shield.Raise` |
+| Break shield (another player's shield) | `Shield.UseCharge` with a charge, else `Shield.BuyBreaker` |
+| Open the shop / buy / spin | `Shop.Open` / `Shop.Buy` / `Shop.Spin` |
+| Rebirth (second confirm) | `Rebirth.Request { confirmed = true }` |
+| Collect "While you were away" | `Offline.Collect` |
+| Settings sliders | `Profile.Settings` |
